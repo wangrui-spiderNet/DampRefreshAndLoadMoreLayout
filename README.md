@@ -11,11 +11,11 @@
 
 ```
 allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
+    repositories {
+    	...
+    	maven { url 'https://jitpack.io' }
+    }
+}
 ```
 #### 在app的build.gradle中添加依赖
 
