@@ -181,7 +181,7 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
 
     @Override
     public void getScrollChanged(int dy, int topViewPosition) {
-        //此处返回当前滑动距离和bottomView底部到容器底部的距离
+        //此处返回当前滑动距离和bottomView顶部到容器底部的距离
     }
 }
 ```
