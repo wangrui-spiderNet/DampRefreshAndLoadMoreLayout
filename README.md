@@ -192,3 +192,18 @@ dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeig
 ```
 此处应当传入自定义bottomView的高度（单位：dp）
 ```
+### 5.其它相关API
+##### 设置动画时长：
+```
+setAnimationDuration(int duration)
+```
+##### 设置最高阻尼时topView顶部距离到父容器顶部的距离（单位：dp）：
+
+```
+setMaxTopValue(int value)
+```
+##### 设置最高阻尼时bottom顶部距离到父容器底部部的距离（单位：dp）：
+
+```
+setMaxBottomValue(int value)
+```
