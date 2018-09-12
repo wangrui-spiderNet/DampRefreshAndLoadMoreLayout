@@ -160,12 +160,16 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     /**
      * 顶部下拉时阻尼值最大时的距离
      */
-    private final static int maxMarginTop = 300;
+    private  int maxTopValue= 200;
+
+    private boolean isModidyMaxTopValue = false;
 
     /**
      * 底部上滑时阻尼值最大时的距离
      */
-    private final static int maxMarginBottom = 300;
+    private  int maxBottomValue = 140;
+
+    private boolean isModidyMaxBottomValue = false;
 
     /**
      * 保存上一次move时手指在Y轴的位置
@@ -214,6 +218,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private int mTopViewHeight = 60;
 
+    private int animationDuration = 200;
+
+
+
     /**
      * BottomView的高度
      * 单位：px
@@ -252,20 +260,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     public DampRefreshAndLoadMoreLayout(Context context) {
         super(context);
         mContext = context;
-        this.setOrientation(LinearLayout.VERTICAL);
+        initThis();
     }
 
     public DampRefreshAndLoadMoreLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
-        this.setOrientation(LinearLayout.VERTICAL);
+        initThis();
 
     }
 
     public DampRefreshAndLoadMoreLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
-        this.setOrientation(LinearLayout.VERTICAL);
+        initThis();
     }
 
     @Override
@@ -277,33 +285,13 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         }
     }
 
+    private void initThis(){
+        this.setOrientation(LinearLayout.VERTICAL);
+        maxTopValue = dp2px(mContext,maxTopValue);
+        maxBottomValue = dp2px(mContext,maxBottomValue);
+    }
+
     private void initDampUpGlideListener(){
-        if(middleView instanceof RecyclerView){
-            RecyclerView recyclerView = (RecyclerView)middleView;
-//            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//                @Override
-//                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-//                    super.onScrollStateChanged(recyclerView, newState);
-//                }
-//
-//                @Override
-//                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                    super.onScrolled(recyclerView, dx, dy);
-//                    if(!recyclerView.canScrollVertically(1)){
-//                        if(isLoadMoreState == LOAD_MORE_PRE&&dy>0){
-//                            if(mDampLoadMoreListeners!=null){
-//                                for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-//                                    dampLoadMoreListener.startLoadMore();
-//                                }
-//                            }
-//                            if(mDampLoadMoreListenerInChild!=null){
-//                                mDampLoadMoreListenerInChild.startLoadMore();
-//                            }
-//                        }
-//                    }
-//                }
-//            });
-        }
     }
     /**
      * 初始化方法
@@ -323,6 +311,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     private void resetMiddleViewState(){
         mChangedMiddleHeight = 0;
     }
+
 
 
     @Override
@@ -373,33 +362,33 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                         }
                     }
                 }
-               if(bottomView!=null){
-                   if(!middleView.canScrollVertically(1)){
-                       if(offsetY>0){
-                           //判断子view是否滑动到顶部并且当前是上滑
-                           isDampTopOrBottom = DAMP_BOTTOM;
-                           if(isLoadMoreState == LOAD_MORE_PRE&&isLoadMoreState != LOAD_MORE_OVER){
-                               if(mDampLoadMoreListeners!=null){
-                                   for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-                                       dampLoadMoreListener.startLoadMore();
-                                   }
-                               }
-                               if(mDampLoadMoreListenerInChild!=null){
-                                   mDampLoadMoreListenerInChild.startLoadMore();
-                               }
-                           }
-                           return true;
-                       }
-                   }
-               }else {
-                   if(!middleView.canScrollVertically(1)){
-                       if(offsetY>0){
-                           //判断子view是否滑动到顶部并且当前是上滑
-                           isDampTopOrBottom = DAMP_BOTTOM;
-                           return true;
-                       }
-                   }
-               }
+                if(bottomView!=null){
+                    if(!middleView.canScrollVertically(1)){
+                        if(offsetY>0){
+                            //判断子view是否滑动到顶部并且当前是上滑
+                            isDampTopOrBottom = DAMP_BOTTOM;
+                            if(isLoadMoreState == LOAD_MORE_PRE&&isLoadMoreState != LOAD_MORE_OVER){
+                                if(mDampLoadMoreListeners!=null){
+                                    for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
+                                        dampLoadMoreListener.startLoadMore();
+                                    }
+                                }
+                                if(mDampLoadMoreListenerInChild!=null){
+                                    mDampLoadMoreListenerInChild.startLoadMore();
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                }else {
+                    if(!middleView.canScrollVertically(1)){
+                        if(offsetY>0){
+                            //判断子view是否滑动到顶部并且当前是上滑
+                            isDampTopOrBottom = DAMP_BOTTOM;
+                            return true;
+                        }
+                    }
+                }
             case MotionEvent.ACTION_UP:
                 //重置必须要重置的状态
                 resetState();
@@ -731,7 +720,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         view.measure(0,h);
         return view.getMeasuredHeight();
     }
-/*以下是顶部View相关函数*/
+    /*以下是顶部View相关函数*/
 
     /**
      * set margintop 的方法
@@ -751,7 +740,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private void startDampTopToHomeAnimation(){
         final ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,mInitialTopViewMarginTop);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -766,7 +755,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private void startDampTopToRefreshAnimation(){
         ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,0);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -793,16 +782,16 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
             marginValue = 0;
         }
         int marginTop = Math.abs(marginValue);
-        dampTopValue = (maxMarginTop-marginTop)/(maxMarginTop/100);
+        dampTopValue = (maxTopValue-marginTop)/(maxTopValue/100);
         if(dampTopValue<10){
             dampTopValue = 10;
         }
         return dampTopValue/100;
     }
 
-/*以上是顶部View相关函数*/
+    /*以上是顶部View相关函数*/
 
-/*以下是中间View和底部View相关函数*/
+    /*以下是中间View和底部View相关函数*/
 
 
     /**
@@ -814,7 +803,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight-mInitialBottomViewHeight);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -834,7 +823,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -851,7 +840,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int topMiddle = middleView.getTop();
         final int bottomMiddle = middleView.getBottom();
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -869,7 +858,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int bottomMiddle = middleView.getBottom();
 
         ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -883,7 +872,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      * 上滑时middleView设置布局位置的方法
      */
     private void setMiddleViewLayout(View targetView,int top,int bottom,int changedValue){
-        if(((getBottom()-getTop())-(targetView.getBottom()+changedValue))>=0){
+        if(((getBottom()-getTop())-(bottom+changedValue))>=0){
             targetView.layout(targetView.getLeft(),top+changedValue,targetView.getRight(),bottom+changedValue);
         }else {
             targetView.layout(targetView.getLeft(),0,targetView.getRight(),getBottom()-getTop());
@@ -895,7 +884,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      * 下拉时middleView设置布局位置的方法
      */
     private void setMiddleViewLayoutForPullDown(View targetView,int top,int bottom,int changedValue){
-        if((targetView.getTop()+changedValue)>=0){
+        if((top+changedValue)>=0){
             targetView.layout(targetView.getLeft(),top+changedValue,targetView.getRight(),bottom+changedValue);
         }else {
             targetView.layout(targetView.getLeft(),0,targetView.getRight(),getBottom()-getTop());
@@ -911,7 +900,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         if(changedValue < 0){
             changedValue = 0;
         }
-        dampValue = (maxMarginBottom-changedValue)/(maxMarginBottom/100);
+        dampValue = (maxBottomValue-changedValue)/(maxBottomValue/100);
         if(dampValue<10){
             dampValue = 10;
         }
@@ -923,7 +912,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         if(changedValue > 0){
             changedValue = 0;
         }
-        dampValue = (maxMarginTop+changedValue)/(maxMarginTop/100);
+        dampValue = (maxTopValue+changedValue)/(maxTopValue/100);
         if(dampValue<10){
             dampValue = 10;
         }
@@ -946,7 +935,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         }
     }
 
-/*以上是中间View和底部View相关函数*/
+    /*以上是中间View和底部View相关函数*/
 
     /**
      * @return px
@@ -971,6 +960,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                 mInitialTopViewMarginTop = -dp2px(mContext,mTopViewHeight);
                 mChangedTopViewMarginTop = mInitialTopViewMarginTop;
                 setTopMarigin(topView,topViewMarginParams,mInitialTopViewMarginTop,mInitialTopViewMarginTop);
+                if(!isModidyMaxTopValue){
+                    maxTopValue = dp2px(mContext,140);
+                }
             }catch (Exception e){
                 Log.e("DampRecyclerViewParent", "setTopView: ",e);
             }
@@ -1015,7 +1007,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                 }
                 mInitialBottomViewHeight = dp2px(mContext,mBottomViewHeight);
             }catch (Exception e){
-                Log.e("DampRecyclerViewParent", "setTopView: ",e);
+                Log.e("DampRecyclerViewParent", "setBottomView: ",e);
             }
         }
     }
@@ -1036,7 +1028,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                 mBottomViewHeight = bottomViewHeight;
                 mInitialBottomViewHeight = dp2px(mContext,mBottomViewHeight);
             }catch (Exception e){
-                Log.e("DampRecyclerViewParent", "setTopView: ",e);
+                Log.e("DampRecyclerViewParent", "setBottomView: ",e);
             }
         }
     }
@@ -1067,7 +1059,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     public void stopRefreshAnimation(){
         if(isRefreshState == REFRESH_ING&&topView!=null){
             ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,mInitialTopViewMarginTop);
-            animator.setDuration(200);
+            animator.setDuration(animationDuration);
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
@@ -1099,7 +1091,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(200);
+        animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -1117,12 +1109,26 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         mChangedMiddleHeight = 0;
     }
 
-   public void loadOver(){
+    public void loadOver(){
         isLoadMoreState = LOAD_MORE_OVER;
         startDampMiddleAndBottomAnimationOnLoadOver();
         mChangedMiddleHeight = 0;
         if(mDampLoadMoreListenerInChild!=null){
             mDampLoadMoreListenerInChild.cannotLoadMore();
         }
-   }
+    }
+
+    public void setAnimationDuration(int duration){
+        this.animationDuration = duration;
+    }
+
+    public void setMaxTopValue(int value){
+        this.maxTopValue = dp2px(mContext,value);
+        isModidyMaxTopValue =true;
+    }
+
+    public void setMaxBottomValue(int value){
+        this.maxBottomValue = dp2px(mContext,value);
+        isModidyMaxBottomValue = true;
+    }
 }
