@@ -94,11 +94,13 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
             ivRefreshState.setRotation(180);
         }
         if(dy>0&&topViewPosition<=0){
-            tvRefreshState.setText("下拉刷新");
             ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
             if((mTopViewHeight-mMeasureHeight)<=-topViewPosition){
                 ivRefreshState.setRotation(0);
             }
+        }
+        if(isRefreshState == REFRESH_READY){
+            tvRefreshState.setText("下拉刷新");
         }
     }
 
