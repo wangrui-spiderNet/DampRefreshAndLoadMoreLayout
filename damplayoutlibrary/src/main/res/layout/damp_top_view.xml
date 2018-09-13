@@ -12,7 +12,7 @@
             android:id="@+id/iv_refresh_state"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:background="@drawable/pull_down" />
+            android:src="@drawable/pull_down" />
         <TextView
             android:layout_marginLeft="5dp"
             android:id="@+id/tv_refresh_state"

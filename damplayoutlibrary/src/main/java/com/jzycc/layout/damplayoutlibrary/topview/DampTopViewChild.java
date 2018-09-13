@@ -31,6 +31,8 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
     private int isRefreshState;
 
+    public final static int DAMPTOPVIEW_HEIGHT = 60;
+
 
     /**
      * 刷新相关操作前的状态
@@ -80,7 +82,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
         mTopViewHeight = (float) dp2px(mContext,60);
 
-        mMeasureHeight = (float) dp2px(mContext,25);
+        mMeasureHeight = (float) dp2px(mContext,26);
     }
 
     @Override
@@ -91,7 +93,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
         if(topViewPosition>=0){
             ivRefreshState.setRotation(180);
         }
-        if(dy>0&&isRefreshState==REFRESH_READY&&topViewPosition<=0){
+        if(dy>0&&topViewPosition<=0){
             tvRefreshState.setText("下拉刷新");
             ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
             if((mTopViewHeight-mMeasureHeight)<=-topViewPosition){
@@ -112,7 +114,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     public void refreshing() {
         isRefreshState = REFRESH_ING;
         tvRefreshState.setText("正在刷新");
-        ivRefreshState.setBackgroundResource(R.drawable.refresh_ing);
+        ivRefreshState.setImageResource(R.drawable.refresh_ing);
         startImageRotation();
     }
 
@@ -127,7 +129,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     public void shouldInitialize() {
         tvRefreshState.setText("下拉刷新");
         ivRefreshState.setRotation(0);
-        ivRefreshState.setBackgroundResource(R.drawable.pull_down);
+        ivRefreshState.setImageResource(R.drawable.pull_down);
         isRefreshState = REFRESH_PRE;
 
     }
@@ -154,5 +156,13 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
         animator.setRepeatCount(-1);
         animator.setInterpolator(new LinearInterpolator());
         animator.start();
+    }
+
+    public void setImageColorResource(int color){
+        ivRefreshState.setColorFilter(color);
+    }
+
+    public void setTextColorResource(int color){
+        tvRefreshState.setTextColor(color);
     }
 }

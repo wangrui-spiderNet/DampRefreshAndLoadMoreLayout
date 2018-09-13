@@ -24,7 +24,7 @@ import java.util.List;
  * author Jzy(Xiaohuntun)
  * date 18-9-4
  */
-public class DampRefreshAndLoadMoreLayout extends LinearLayout implements NestedScrollingParent {
+public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private Context mContext;
 
     /**
@@ -162,6 +162,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private  int maxTopValue= 200;
 
+    /**
+     *是否是外部修改maxTopValue
+     */
     private boolean isModidyMaxTopValue = false;
 
     /**
@@ -169,6 +172,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private  int maxBottomValue = 140;
 
+    /**
+     * 是否外部修改MaxBottomValue
+     */
     private boolean isModidyMaxBottomValue = false;
 
     /**
@@ -218,8 +224,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private int mTopViewHeight = 60;
 
+    /**
+     *动画时长
+     */
     private int animationDuration = 200;
 
+    /**
+     * 当前是否有动画在播放
+     */
+    private boolean isAnimationPlay = false;
+
+    /**
+     * 用于保存动画上一次数值，计算滑动距离。
+     */
+    private int preAnimationValue;
 
 
     /**
@@ -228,6 +246,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private int mInitialBottomViewHeight;
 
+
+    /**
+     * topView必须实现的监听
+     */
     private DampTopViewListener mDampRefreshListenerInChild;
 
 
@@ -242,6 +264,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     private List<DampRefreshListener> mDampRefreshListeners = new ArrayList<>();
 
+    /**
+     * bottom必须实现的监听
+     */
     private DampBottomViewListener mDampLoadMoreListenerInChild;
 
     public interface DampLoadMoreListener {
@@ -325,12 +350,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                     return true;
                 }
                 if(isRefreshState==REFRESH_PRE){
-                    //刷新状态为初始状态时，发送需要初始化topview的消息
-//                    if(mDampRefreshListeners!=null){
-//                        for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-//                            dampRefreshListener.shouldInitialize();
-//                        }
-//                    }
                     if(mDampRefreshListenerInChild!=null){
                         mDampRefreshListenerInChild.shouldInitialize();
                     }
@@ -415,252 +434,277 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
                 int nowY = (int)event.getY();
                 int offsetY = mInitialDownY - nowY;
                 mInitialDownY = nowY;
-                if(isDampTopOrBottom == DAMP_TOP&&!middleView.canScrollVertically(-1)){
-                    if(topView!=null){
-                        if(offsetY<0||isRefreshState==REFRESH_ING){//判断当前是否是顶部可拉动状态
-                            isPullDownState = PULL_DOWN_ING;//复原下拉状态
-                        }
-                        if(isPullDownState == PULL_DOWN_ING){
-                            float nowMarginTop;
-                            if(isRefreshState == REFRESH_ING && topView.getTop()>= mTopViewHeight){
-                                nowMarginTop = (mChangedTopViewMarginTop-offsetY*measureDampTopValue(mChangedTopViewMarginTop+mTopViewHeight));
-                            }else {
-                                nowMarginTop = (mChangedTopViewMarginTop-offsetY*measureDampTopValue(mChangedTopViewMarginTop));
-
+                if(!isAnimationPlay){
+                    if(isDampTopOrBottom == DAMP_TOP&&!middleView.canScrollVertically(-1)){
+                        if(topView!=null){
+                            if(offsetY<0||isRefreshState==REFRESH_ING){//判断当前是否是顶部可拉动状态
+                                isPullDownState = PULL_DOWN_ING;//复原下拉状态
                             }
-                            setTopMarigin(topView,topViewMarginParams,(int)nowMarginTop,mInitialTopViewMarginTop);
-                            mChangedTopViewMarginTop = (int) nowMarginTop;
-                            if(mDampRefreshListenerInChild!=null){
-                                mDampRefreshListenerInChild.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
-                            }
-                            if(mDampRefreshListeners!=null){
-                                for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-                                    dampRefreshListener.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
+                            if(isPullDownState == PULL_DOWN_ING){
+                                float nowMarginTop;
+                                if(offsetY>0){
+                                    nowMarginTop = mChangedTopViewMarginTop-offsetY;
+                                }else if(isRefreshState == REFRESH_ING && topView.getTop()>= mTopViewHeight){
+                                    nowMarginTop = (mChangedTopViewMarginTop-offsetY*measureDampTopValue(mChangedTopViewMarginTop+mTopViewHeight));
+                                }else {
+                                    nowMarginTop = (mChangedTopViewMarginTop-offsetY*measureDampTopValue(mChangedTopViewMarginTop));
                                 }
-                            }
-                            if(mChangedTopViewMarginTop > 0){
-                                //当前下拉距离足够刷新
-                                if(isRefreshState != REFRESH_ING){
-                                    isRefreshState = REFRESH_READY;
-                                    if(mDampRefreshListenerInChild!=null){
-                                        mDampRefreshListenerInChild.refreshReady();
+
+                                setTopMarigin(topView,topViewMarginParams,(int)nowMarginTop,mInitialTopViewMarginTop);
+
+                                mChangedTopViewMarginTop = (int) nowMarginTop;
+                                if(mChangedTopViewMarginTop > 0){
+                                    //当前下拉距离足够刷新
+                                    if(isRefreshState != REFRESH_ING){
+                                        isRefreshState = REFRESH_READY;
+                                        if(mDampRefreshListenerInChild!=null){
+                                            mDampRefreshListenerInChild.refreshReady();
+                                        }
                                     }
-//                                    if(mDampRefreshListeners!=null){
-//                                        for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-//                                            dampRefreshListener.refreshReady();
-//                                        }
-//                                    }
+                                }else {
+                                    //当前下拉距离不够刷新
+                                    if(isRefreshState != REFRESH_ING)
+                                        isRefreshState = REFRESH_CANNOT;
                                 }
-                            }else {
-                                //当前下拉距离不够刷新
-                                if(isRefreshState != REFRESH_ING)
-                                    isRefreshState = REFRESH_CANNOT;
-                            }
-                            if(nowMarginTop < mInitialTopViewMarginTop){
-                                //如果顶部view回到原位但是仍然在上滑时添加此标记
-                                isPullDownState = PULL_DOWN_COMPLETE;
-                            }
-                        }
-                    }else {
-                        //如果topView为空则只实现回弹效果
-                        if(offsetY<0||isRefreshState==REFRESH_ING){//判断当前是否是顶部可拉动状态
-                            isPullDownState = PULL_DOWN_ING;//复原下拉状态
-                        }
-
-                        if(isPullDownState == PULL_DOWN_ING){
-                            float nowOffsetY = offsetY*measureDampMiddleValueForPullDown(mChangedMiddleHeight);
-                            setMiddleViewLayoutForPullDown(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
-                            mChangedMiddleHeight += (int)nowOffsetY;
-                            if(mChangedMiddleHeight>0){
-                                //如果MidlleView回到原位但是仍在下拉时添加此标记
-                                isPullDownState = PULL_DOWN_COMPLETE;
-                                mChangedMiddleHeight = 0;
-                            }
-                        }
-                    }
-                }else if(isDampTopOrBottom == DAMP_BOTTOM&&!canScrollVertically(1)){
-                    if(bottomView!=null){
-                        if(isLoadMoreState == LOAD_MORE_OVER){
-                            if(offsetY>0){
-                                isUpglide = UPGLIDE_ING;
-                            }
-                            if(isUpglide == UPGLIDE_ING){
-                                float nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
-                                setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
-                                setBottomViewLayout(bottomView,bottomView.getTop(),bottomView.getBottom(),-(int)nowOffsetY,mInitialBottomViewHeight);
-                                mChangedMiddleHeight += (int)nowOffsetY;
-
-                                if(mDampLoadMoreListeners!=null){
-                                    for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-                                        dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                if(nowMarginTop < mInitialTopViewMarginTop){
+                                    //如果顶部view回到原位但是仍然在上滑时添加此标记
+                                    isPullDownState = PULL_DOWN_COMPLETE;
+                                    mChangedTopViewMarginTop = mInitialTopViewMarginTop;
+                                }
+                                if(mDampRefreshListenerInChild!=null){
+                                    mDampRefreshListenerInChild.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
+                                }
+                                if(mDampRefreshListeners!=null){
+                                    for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
+                                        dampRefreshListener.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
                                     }
-                                }
-                                if(mDampLoadMoreListenerInChild!=null){
-                                    mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
-                                }
-
-                                if(mChangedMiddleHeight<0){
-                                    //如果MidlleView回到原位但是仍在下拉时添加此标记
-                                    isUpglide = UPGLIDE_COMPLETE;
-                                    mChangedMiddleHeight = 0;
                                 }
                             }
                         }else {
-                            if(offsetY>0||isLoadMoreState == LOAD_MORE_ING){//判断当前是否是底部可上滑状态
-                                isUpglide = UPGLIDE_ING;
-                                isLoadMoreState = LOAD_MORE_ING;
+                            //如果topView为空则只实现回弹效果
+                            if(offsetY<0){//判断当前是否是顶部可拉动状态
+                                isPullDownState = PULL_DOWN_ING;//复原下拉状态
                             }
-                            if(isUpglide == UPGLIDE_ING){
-                                float nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
-                                setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
-                                setBottomViewLayout(bottomView,bottomView.getTop(),bottomView.getBottom(),-(int)nowOffsetY,mInitialBottomViewHeight);
-                                mChangedMiddleHeight += (int)nowOffsetY;
 
-                                if(mDampLoadMoreListeners!=null){
-                                    for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-                                        dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
-                                    }
+                            if(isPullDownState == PULL_DOWN_ING){
+                                if(offsetY>0){
+                                    setMiddleViewLayoutForPullDown(middleView,middleView.getTop(),middleView.getBottom(),-offsetY);
+                                    mChangedMiddleHeight += offsetY;
+                                }else {
+                                    float nowOffsetY = offsetY*measureDampMiddleValueForPullDown(mChangedMiddleHeight);
+                                    setMiddleViewLayoutForPullDown(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
+                                    mChangedMiddleHeight += (int)nowOffsetY;
                                 }
-                                if(mDampLoadMoreListenerInChild!=null){
-                                    mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
-                                }
-
-                                if(mChangedMiddleHeight<0){
+                                if(mChangedMiddleHeight>0){
                                     //如果MidlleView回到原位但是仍在下拉时添加此标记
-                                    isUpglide = UPGLIDE_COMPLETE;
-                                    isLoadMoreState = LOAD_MORE_ING_II;
+                                    isPullDownState = PULL_DOWN_COMPLETE;
                                     mChangedMiddleHeight = 0;
                                 }
                             }
                         }
-                    }else {
-                        //没有设置bottomView时只实现Damp效果
-                        if(offsetY>0){//判断当前是否是底部可上滑状态
-                            isUpglide = UPGLIDE_ING;
-                        }
-                        if(isUpglide == UPGLIDE_ING){
-                            float nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
-                            setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
-                            mChangedMiddleHeight += (int)nowOffsetY;
-                            if(mChangedMiddleHeight<=0){
-                                //如果MidlleView回到原位但是仍在下拉时添加此标记
-                                isUpglide = UPGLIDE_COMPLETE;
-                                mChangedMiddleHeight = 0;
+                    }else if(isDampTopOrBottom == DAMP_BOTTOM&&!canScrollVertically(1)){
+                        if(bottomView!=null){
+                            if(isLoadMoreState == LOAD_MORE_OVER){
+                                if(offsetY>0){
+                                    isUpglide = UPGLIDE_ING;
+                                }
+                                if(isUpglide == UPGLIDE_ING){
+                                    float nowOffsetY;
+                                    if(offsetY<0){
+                                        nowOffsetY = offsetY;
+                                    }else {
+                                        nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
+                                    }
+                                    setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
+                                    setBottomViewLayout(bottomView,bottomView.getTop(),bottomView.getBottom(),-(int)nowOffsetY,mInitialBottomViewHeight);
+                                    mChangedMiddleHeight += (int)nowOffsetY;
+
+                                    if(mChangedMiddleHeight<0){
+                                        //如果MidlleView回到原位但是仍在下拉时添加此标记
+                                        isUpglide = UPGLIDE_COMPLETE;
+                                        mChangedMiddleHeight = 0;
+                                    }
+
+                                    if(mDampLoadMoreListeners!=null){
+                                        for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
+                                            dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                        }
+                                    }
+                                    if(mDampLoadMoreListenerInChild!=null){
+                                        mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                    }
+                                }
+                            }else {
+                                if(offsetY>0||isLoadMoreState == LOAD_MORE_ING){//判断当前是否是底部可上滑状态
+                                    isUpglide = UPGLIDE_ING;
+                                    isLoadMoreState = LOAD_MORE_ING;
+                                }
+                                if(isUpglide == UPGLIDE_ING){
+                                    float nowOffsetY;
+                                    if(offsetY<0){
+                                        nowOffsetY = offsetY;
+                                    }else {
+                                        nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
+                                    }
+                                    setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
+                                    setBottomViewLayout(bottomView,bottomView.getTop(),bottomView.getBottom(),-(int)nowOffsetY,mInitialBottomViewHeight);
+                                    mChangedMiddleHeight += (int)nowOffsetY;
+
+                                    if(mChangedMiddleHeight<0){
+                                        //如果MidlleView回到原位但是仍在下拉时添加此标记
+                                        isUpglide = UPGLIDE_COMPLETE;
+                                        isLoadMoreState = LOAD_MORE_ING_II;
+                                        mChangedMiddleHeight = 0;
+                                    }
+
+                                    if(mDampLoadMoreListeners!=null){
+                                        for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
+                                            dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                        }
+                                    }
+                                    if(mDampLoadMoreListenerInChild!=null){
+                                        mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                    }
+                                }
+                            }
+                        }else {
+                            //没有设置bottomView时只实现Damp效果
+                            if(offsetY>0){//判断当前是否是底部可上滑状态
+                                isUpglide = UPGLIDE_ING;
+                            }
+                            if(isUpglide == UPGLIDE_ING){
+                                float nowOffsetY;
+                                if(offsetY<0){
+                                    nowOffsetY = offsetY;
+                                }else {
+                                    nowOffsetY = offsetY*measureDampMiddleValue(mChangedMiddleHeight);
+                                }
+                                setMiddleViewLayout(middleView,middleView.getTop(),middleView.getBottom(),-(int)nowOffsetY);
+                                mChangedMiddleHeight += (int)nowOffsetY;
+                                if(mChangedMiddleHeight<=0){
+                                    //如果MidlleView回到原位但是仍在下拉时添加此标记
+                                    isUpglide = UPGLIDE_COMPLETE;
+                                    mChangedMiddleHeight = 0;
+                                }
                             }
                         }
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                if(isDampTopOrBottom == DAMP_TOP&&isPullDownState==PULL_DOWN_ING){
-                    if(topView!=null){
-                        if(isRefreshState == REFRESH_CANNOT){
-                            //当下拉距离不够刷新时,执行该情景下动画，并初始化Refresh状态
-                            startDampTopToHomeAnimation();
-                            isRefreshState = REFRESH_PRE;
-                            resetTopViewState();
-                        }else if(mChangedTopViewMarginTop<0){
-                            //为解决刷新完成状态全交由外部决定的需求，此处可以实现在刷新状态时，topView尚未完全显示的时候可以带有回弹效果
-                            startDampTopToHomeAnimation();
-                            resetTopViewState();
-                        }else if(isRefreshState == REFRESH_READY){
-                            //当状态为即将触发刷新时，执行该情景下动画，并且矫正topView结果位置
-                            startDampTopToRefreshAnimation();
-                            mChangedTopViewMarginTop = 0;
-                            //刷新必需步骤执行后将状态置为正在刷新
-                            isRefreshState = REFRESH_ING;
-                            if(mDampRefreshListenerInChild!=null){
-                                mDampRefreshListenerInChild.refreshing();
-                            }
-                            if(mDampRefreshListeners!=null){
-                                for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-                                    dampRefreshListener.startRefresh();
+                if(isAnimationPlay == false){
+                    if(isDampTopOrBottom == DAMP_TOP&&isPullDownState==PULL_DOWN_ING){
+                        if(topView!=null){
+                            if(isRefreshState == REFRESH_CANNOT){
+                                //当下拉距离不够刷新时,执行该情景下动画，并初始化Refresh状态
+                                startDampTopToHomeAnimation();
+                                isRefreshState = REFRESH_PRE;
+                                resetTopViewState();
+                            }else if(mChangedTopViewMarginTop<0){
+                                //为解决刷新完成状态全交由外部决定的需求，此处可以实现在刷新状态时，topView尚未完全显示的时候可以带有回弹效果
+                                startDampTopToHomeAnimation();
+                                resetTopViewState();
+                            }else if(isRefreshState == REFRESH_READY){
+                                //当状态为即将触发刷新时，执行该情景下动画，并且矫正topView结果位置
+                                startDampTopToRefreshAnimation();
+                                mChangedTopViewMarginTop = 0;
+                                //刷新必需步骤执行后将状态置为正在刷新
+                                isRefreshState = REFRESH_ING;
+                                if(mDampRefreshListenerInChild!=null){
+                                    mDampRefreshListenerInChild.refreshing();
                                 }
+                                if(mDampRefreshListeners!=null){
+                                    for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
+                                        dampRefreshListener.startRefresh();
+                                    }
+                                }
+                            }else if(isRefreshState == REFRESH_ING&&middleView.getTop()>=mTopViewHeight){
+                                //为解决刷新完成状态全交由外部决定的需求，此处实现正在刷新时，topView完全显示的时候可以带有回弹效果
+                                startDampTopToRefreshAnimation();
+                                mChangedTopViewMarginTop = 0;
                             }
-                        }else if(isRefreshState == REFRESH_ING&&middleView.getTop()>=mTopViewHeight){
-                            //为解决刷新完成状态全交由外部决定的需求，此处实现正在刷新时，topView完全显示的时候可以带有回弹效果
-                            startDampTopToRefreshAnimation();
-                            mChangedTopViewMarginTop = 0;
+                        }else{
+                            startDampMiddleForPullDown();
+                            mChangedMiddleHeight = 0;
                         }
-                    }else{
-                        startDampMiddleForPullDown();
-                        mChangedMiddleHeight = 0;
-                    }
-                    //重置拖动状态
-                    resetState();
-                }else if(isDampTopOrBottom == DAMP_BOTTOM&&isUpglide == UPGLIDE_ING){
-                    if(bottomView!=null){
-                        if(isLoadMoreState==LOAD_MORE_ING){
-                            startDampMiddleAndBottomAnimationOnLoadMore();
-                            isUpglide = UPGLIDE_PRE;
-                            mChangedMiddleHeight = mInitialBottomViewHeight;
-                        }else if(isLoadMoreState == LOAD_MORE_OVER){
-                            startDampMiddleAndBottomAnimationOnLoadOver();
+                        //重置拖动状态
+                        resetState();
+                    }else if(isDampTopOrBottom == DAMP_BOTTOM&&isUpglide == UPGLIDE_ING){
+                        if(bottomView!=null){
+                            if(isLoadMoreState==LOAD_MORE_ING){
+                                startDampMiddleAndBottomAnimationOnLoadMore();
+                                isUpglide = UPGLIDE_PRE;
+                                mChangedMiddleHeight = mInitialBottomViewHeight;
+                            }else if(isLoadMoreState == LOAD_MORE_OVER){
+                                startDampMiddleAndBottomAnimationOnLoadOver();
+                                isUpglide = UPGLIDE_PRE;
+                                mChangedMiddleHeight = 0;
+                            }
+                        }else {
+                            stratDampMiddleForUpGlide();
                             isUpglide = UPGLIDE_PRE;
                             mChangedMiddleHeight = 0;
                         }
-                    }else {
-                        stratDampMiddleForUpGlide();
-                        isUpglide = UPGLIDE_PRE;
-                        mChangedMiddleHeight = 0;
+                        resetState();
                     }
-                    resetState();
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
-                if(isDampTopOrBottom == DAMP_TOP&&isPullDownState==PULL_DOWN_ING){
-                    if(topView!=null){
-                        if(isRefreshState == REFRESH_CANNOT){
-                            //当下拉距离不够刷新时,执行该情景下动画，并初始化Refresh状态
-                            startDampTopToHomeAnimation();
-                            isRefreshState = REFRESH_PRE;
-                            resetTopViewState();
-                        }else if(mChangedTopViewMarginTop<0){
-                            //为解决刷新完成状态全交由外部决定的需求，此处可以实现在刷新状态时，topView尚未完全显示的时候可以带有回弹效果
-                            startDampTopToHomeAnimation();
-                            resetTopViewState();
-                        }else if(isRefreshState == REFRESH_READY){
-                            //当状态为即将触发刷新时，执行该情景下动画，并且矫正topView结果位置
-                            startDampTopToRefreshAnimation();
-                            mChangedTopViewMarginTop = 0;
-                            //刷新必需步骤执行后将状态置为正在刷新
-                            isRefreshState = REFRESH_ING;
-                            if(mDampRefreshListenerInChild!=null){
-                                mDampRefreshListenerInChild.refreshing();
-                            }
-                            if(mDampRefreshListeners!=null){
-                                for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-                                    dampRefreshListener.startRefresh();
+                if(!isAnimationPlay){
+                    if(isDampTopOrBottom == DAMP_TOP&&isPullDownState==PULL_DOWN_ING){
+                        if(topView!=null){
+                            if(isRefreshState == REFRESH_CANNOT){
+                                //当下拉距离不够刷新时,执行该情景下动画，并初始化Refresh状态
+                                startDampTopToHomeAnimation();
+                                isRefreshState = REFRESH_PRE;
+                                resetTopViewState();
+                            }else if(mChangedTopViewMarginTop<0){
+                                //为解决刷新完成状态全交由外部决定的需求，此处可以实现在刷新状态时，topView尚未完全显示的时候可以带有回弹效果
+                                startDampTopToHomeAnimation();
+                                resetTopViewState();
+                            }else if(isRefreshState == REFRESH_READY){
+                                //当状态为即将触发刷新时，执行该情景下动画，并且矫正topView结果位置
+                                startDampTopToRefreshAnimation();
+                                mChangedTopViewMarginTop = 0;
+                                //刷新必需步骤执行后将状态置为正在刷新
+                                isRefreshState = REFRESH_ING;
+                                if(mDampRefreshListenerInChild!=null){
+                                    mDampRefreshListenerInChild.refreshing();
                                 }
+                                if(mDampRefreshListeners!=null){
+                                    for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
+                                        dampRefreshListener.startRefresh();
+                                    }
+                                }
+                            }else if(isRefreshState == REFRESH_ING&&middleView.getTop()>=mTopViewHeight){
+                                //为解决刷新完成状态全交由外部决定的需求，此处实现正在刷新时，topView完全显示的时候可以带有回弹效果
+                                startDampTopToRefreshAnimation();
+                                mChangedTopViewMarginTop = 0;
                             }
-                        }else if(isRefreshState == REFRESH_ING&&middleView.getTop()>=mTopViewHeight){
-                            //为解决刷新完成状态全交由外部决定的需求，此处实现正在刷新时，topView完全显示的时候可以带有回弹效果
-                            startDampTopToRefreshAnimation();
-                            mChangedTopViewMarginTop = 0;
+                        }else{
+                            startDampMiddleForPullDown();
+                            mChangedMiddleHeight = 0;
                         }
-                    }else{
-                        startDampMiddleForPullDown();
-                        mChangedMiddleHeight = 0;
-                    }
-                    //重置拖动状态
-                    resetState();
-                }else if(isDampTopOrBottom == DAMP_BOTTOM&&isUpglide == UPGLIDE_ING){
-                    if(bottomView!=null){
-                        if(isLoadMoreState==LOAD_MORE_ING){
-                            startDampMiddleAndBottomAnimationOnLoadMore();
-                            isUpglide = UPGLIDE_PRE;
-                            mChangedMiddleHeight = mInitialBottomViewHeight;
-                        }else if(isLoadMoreState == LOAD_MORE_OVER){
-                            startDampMiddleAndBottomAnimationOnLoadOver();
+                        //重置拖动状态
+                        resetState();
+                    }else if(isDampTopOrBottom == DAMP_BOTTOM&&isUpglide == UPGLIDE_ING){
+                        if(bottomView!=null){
+                            if(isLoadMoreState==LOAD_MORE_ING){
+                                startDampMiddleAndBottomAnimationOnLoadMore();
+                                isUpglide = UPGLIDE_PRE;
+                                mChangedMiddleHeight = mInitialBottomViewHeight;
+                            }else if(isLoadMoreState == LOAD_MORE_OVER){
+                                startDampMiddleAndBottomAnimationOnLoadOver();
+                                isUpglide = UPGLIDE_PRE;
+                                mChangedMiddleHeight = 0;
+                            }
+                        }else {
+                            stratDampMiddleForUpGlide();
                             isUpglide = UPGLIDE_PRE;
                             mChangedMiddleHeight = 0;
                         }
-                    }else {
-                        stratDampMiddleForUpGlide();
-                        isUpglide = UPGLIDE_PRE;
-                        mChangedMiddleHeight = 0;
+                        resetState();
                     }
-                    resetState();
                 }
                 break;
         }
@@ -739,30 +783,63 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      * 顶部完全回弹时的动画
      */
     private void startDampTopToHomeAnimation(){
+        preAnimationValue = mChangedTopViewMarginTop;
         final ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,mInitialTopViewMarginTop);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
+                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                if(mDampRefreshListenerInChild!=null){
+                    mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+
+                }
+                if(mDampRefreshListeners!=null){
+                    for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
+                        dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                    }
+                }
+                preAnimationValue = (int)animation.getAnimatedValue();
+                if(mInitialTopViewMarginTop == (int) animation.getAnimatedValue()){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
 
     /**
      * 回弹到刷新位置的动画PRE
      */
     private void startDampTopToRefreshAnimation(){
+        preAnimationValue = mChangedTopViewMarginTop;
         ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,0);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),0);
+                setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
+                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                if(mDampRefreshListenerInChild!=null){
+                    mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+
+                }
+                if(mDampRefreshListeners!=null){
+                    for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
+                        dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                    }
+                }
+                preAnimationValue = (int)animation.getAnimatedValue();
+                if((int)animation.getAnimatedValue() == 0){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
 
     /**
@@ -802,6 +879,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int bottomMiddle = middleView.getBottom();
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
+        final int lastValue = mChangedMiddleHeight-mInitialBottomViewHeight;
+
+        preAnimationValue = 0;
+
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight-mInitialBottomViewHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -809,9 +890,24 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
             public void onAnimationUpdate(ValueAnimator animation) {
                 middleView.layout(middleView.getLeft(),topMiddle+(int)animation.getAnimatedValue(),middleView.getRight(),bottomMiddle+(int)animation.getAnimatedValue());
                 bottomView.layout(bottomView.getLeft(),topBottom+(int)animation.getAnimatedValue(),bottomView.getRight(),bottomBottom+(int)animation.getAnimatedValue());
+                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                if(mDampLoadMoreListenerInChild!=null){
+                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+
+                }
+                if(mDampLoadMoreListeners!=null){
+                    for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
+                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                    }
+                }
+                preAnimationValue = (int)animation.getAnimatedValue();
+                if((int)animation.getAnimatedValue() == lastValue){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
 
     /**
@@ -822,6 +918,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int bottomMiddle = middleView.getBottom();
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
+        final int lastValue = mChangedMiddleHeight;
+
+        preAnimationValue = 0;
+
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -829,9 +929,26 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
                 setBottomViewLayout(bottomView,topBottom,bottomBottom,(int)animation.getAnimatedValue(),mInitialBottomViewHeight);
+
+                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                if(mDampLoadMoreListenerInChild!=null){
+                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+
+                }
+                if(mDampLoadMoreListeners!=null){
+                    for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
+                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                    }
+                }
+                preAnimationValue = (int)animation.getAnimatedValue();
+
+                if((int)animation.getAnimatedValue() == lastValue){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
     /**
      * 没有bottimView时的回弹动画
@@ -839,15 +956,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     private void stratDampMiddleForUpGlide(){
         final int topMiddle = middleView.getTop();
         final int bottomMiddle = middleView.getBottom();
+        final int lastValue = mChangedMiddleHeight;
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
+                if((int)animation.getAnimatedValue() == lastValue){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
 
     /**
@@ -856,16 +978,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
     private void startDampMiddleForPullDown(){
         final int topMiddle = middleView.getTop();
         final int bottomMiddle = middleView.getBottom();
-
+        final int lastValue = mChangedMiddleHeight;
         ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayoutForPullDown(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
+                if((int)animation.getAnimatedValue() == lastValue){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
     }
 
     /**
@@ -1058,15 +1184,33 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
      */
     public void stopRefreshAnimation(){
         if(isRefreshState == REFRESH_ING&&topView!=null){
+            preAnimationValue = mChangedTopViewMarginTop;
             ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop,mInitialTopViewMarginTop);
             animator.setDuration(animationDuration);
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
+
+                    preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                    if(mDampRefreshListenerInChild!=null){
+                        mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+
+                    }
+                    if(mDampRefreshListeners!=null){
+                        for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
+                            dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                        }
+                    }
+                    preAnimationValue = (int)animation.getAnimatedValue();
+
+                    if((int)animation.getAnimatedValue() == mInitialTopViewMarginTop){
+                        isAnimationPlay = false;
+                    }
                 }
             });
             animator.start();
+            isAnimationPlay = true;
             isRefreshState = REFRESH_PRE;
             isLoadMoreState = LOAD_MORE_PRE;
             resetState();
@@ -1074,11 +1218,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
             if(mDampRefreshListenerInChild!=null){
                 mDampRefreshListenerInChild.refreshComplete();
             }
-//            if(mDampRefreshListeners!=null){
-//                for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-//                    dampRefreshListener.refreshComplete();
-//                }
-//            }
         }
     }
 
@@ -1090,6 +1229,8 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
         final int bottomMiddle = middleView.getBottom();
         final int topBottom = bottomView.getTop();
         final int bottomBottom = bottomView.getBottom();
+        final int lastValue = mChangedMiddleHeight;
+        preAnimationValue = 0;
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -1097,9 +1238,26 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements Nested
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
                 setBottomViewLayout(bottomView,topBottom,bottomBottom,(int)animation.getAnimatedValue(),mInitialBottomViewHeight);
+
+                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+                if(mDampLoadMoreListenerInChild!=null){
+                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+
+                }
+                if(mDampLoadMoreListeners!=null){
+                    for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
+                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                    }
+                }
+                preAnimationValue = (int)animation.getAnimatedValue();
+
+                if((int)animation.getAnimatedValue() == lastValue){
+                    isAnimationPlay = false;
+                }
             }
         });
         animator.start();
+        isAnimationPlay = true;
 
         if(mDampLoadMoreListenerInChild!=null){
             mDampLoadMoreListenerInChild.stopLoadMore();

@@ -21,8 +21,9 @@ import com.jzycc.layout.damplayoutlibrary.R;
 public class DampBottomViewChild extends FrameLayout implements DampBottomViewListener{
     private Activity mContext;
     private ImageView ivLoad;
+    private ImageView ivCenter;
     private ObjectAnimator animator;
-
+    public final static int DAMPBOTTOMVIEW_HEIGHT = 60;
     public DampBottomViewChild(@NonNull Context context) {
         super(context);
         mContext = (Activity) context;
@@ -43,6 +44,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     private void initThis(){
         View inflate = inflate(getContext(), R.layout.damp_bottom_view, this);
         ivLoad = (ImageView)inflate.findViewById(R.id.iv_load);
+        ivCenter = (ImageView)inflate.findViewById(R.id.iv_center);
 
     }
 
@@ -90,4 +92,10 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     public void getScrollChanged(int dy, int changedBottomViewPosition) {
 
     }
+
+    public void setImageColorResource(int color){
+        ivLoad.setColorFilter(color);
+        ivCenter.setColorFilter(color);
+    }
+
 }

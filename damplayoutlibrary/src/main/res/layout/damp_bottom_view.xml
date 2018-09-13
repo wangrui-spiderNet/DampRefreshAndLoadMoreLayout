@@ -7,11 +7,13 @@
         android:id="@+id/iv_load"
         android:layout_width="25dp"
         android:layout_height="25dp"
-        android:background="@drawable/load"
+        android:src="@drawable/load"
         android:layout_centerInParent="true"/>
     <ImageView
+        android:id="@+id/iv_center"
         android:layout_centerInParent="true"
         android:layout_width="8dp"
         android:layout_height="8dp"
-        android:background="@drawable/circle_point"/>
+        android:src="@drawable/circle_point"/>
 </RelativeLayout>
+
