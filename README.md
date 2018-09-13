@@ -215,7 +215,7 @@ dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeig
 ```
 此处应当传入自定义bottomView的高度（单位：dp）
 ```
-### 5.其它相关API
+### 6.其它相关API
 ##### 设置动画时长：
 ```
 setAnimationDuration(int duration)
