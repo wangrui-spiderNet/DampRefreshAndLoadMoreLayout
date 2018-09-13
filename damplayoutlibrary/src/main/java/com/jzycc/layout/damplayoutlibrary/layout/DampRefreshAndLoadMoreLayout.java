@@ -430,6 +430,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     return true;
                 }
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mInitialDownY = (int)event.getY(0);
+                break;
             case MotionEvent.ACTION_MOVE:
                 int nowY = (int)event.getY();
                 int offsetY = mInitialDownY - nowY;
@@ -648,6 +651,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                         resetState();
                     }
                 }
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mInitialDownY = (int)event.getY(1);
                 break;
             case MotionEvent.ACTION_CANCEL:
                 if(!isAnimationPlay){
