@@ -1,7 +1,7 @@
 # DampRefreshAndLoadMoreLayout使用手册
 ![](https://img.shields.io/badge/Version-v1.1.0-brightgreen.svg)
 ```
-    请依赖最新的版本，1.0.x的版本不够稳定，不推荐依赖。
+请依赖最新的版本，1.0.x的版本不够稳定，不推荐依赖。
 ```
 ## DampRefreshAndLoadMoreLayout介绍
 - [此处附上demo地址](https://github.com/JzyCc/Android_Damp-Refresh-LoadMore_RecyclerView)
@@ -194,6 +194,24 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
 ```
 dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeight);
 ```
+### 5.关于默认topView和bottomView适配不同背景色
+##### 默认topView设置图片颜色和文本颜色
+
+```
+ DampTopViewChild dampTopViewChild = new DampTopViewChild(this);
+ dampTopViewChild.setImageColorResource(color);//设置图片颜色
+ dampTopViewChild.setTextColorResource(color);//设置文本颜色
+ dampRefreshAndLoadMoreLayout.setTopView(dampTopViewChild,DampTopViewChild.DAMPTOPVIEW_HEIGHT);//设置TopView
+```
+##### 默认bottomView设置图片颜色
+
+```
+ DampBottomViewChild dampBottomViewChild = new DampBottomViewChild(this);
+ dampBottomViewChild.setImageColorResource(color);//设置图片颜色
+ dampRefreshAndLoadMoreLayout.setBottomView(dampBottomViewChild,DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
+```
+
+
 ```
 此处应当传入自定义bottomView的高度（单位：dp）
 ```
