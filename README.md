@@ -24,7 +24,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.1.0'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0.0'
 }
 ```
 
