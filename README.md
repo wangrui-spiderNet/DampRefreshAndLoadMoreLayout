@@ -2,8 +2,9 @@
 ## DampRefreshAndLoadMoreLayout介绍
 - [此处附上demo地址](https://github.com/JzyCc/Android_Damp-Refresh-LoadMore_RecyclerView)
 1. recyclerview在它里面可以更灵活的转交事件。
-2. 根据配置可以实现刷新和加载更多的功能。
-3. 提供接口将头部和底部与容器分离，可以根据自己的需求完全自定义自己想要的刷新头部和加载底部。
+2. 默认实现仿IOS拖动带阻尼回弹的效果。
+3. 可以实现刷新和加载更多的功能。
+4. 将头部和底部与容器分离，提供接口返回相关参数，可以根据返回参数完全自定义自己想要的刷新头部和加载底部。
 
 ## 使用
 ### 1. 添加依赖
@@ -22,7 +23,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0.1'
 }
 ```
 
@@ -181,7 +182,7 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
 
     @Override
     public void getScrollChanged(int dy, int topViewPosition) {
-        //此处返回当前滑动距离和bottomView底部到容器底部的距离
+        //此处返回当前滑动距离和bottomView顶部到容器底部的距离
     }
 }
 ```
@@ -191,4 +192,19 @@ dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeig
 ```
 ```
 此处应当传入自定义bottomView的高度（单位：dp）
+```
+### 5.其它相关API
+##### 设置动画时长：
+```
+setAnimationDuration(int duration)
+```
+##### 设置最高阻尼时topView顶部距离到父容器顶部的距离（单位：dp）：
+
+```
+setMaxTopValue(int value)
+```
+##### 设置最高阻尼时bottom顶部距离到父容器底部部的距离（单位：dp）：
+
+```
+setMaxBottomValue(int value)
 ```
