@@ -1,5 +1,5 @@
 # DampRefreshAndLoadMoreLayout使用手册
-![](https://img.shields.io/badge/Version-v1.0.0-brightgreen.svg)
+![](https://img.shields.io/badge/Version-v1.0.1-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
 - [此处附上demo地址](https://github.com/JzyCc/Android_Damp-Refresh-LoadMore_RecyclerView)
 1. recyclerview在它里面可以更灵活的转交事件。
@@ -31,7 +31,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0.0'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0.1'
 }
 ```
 
