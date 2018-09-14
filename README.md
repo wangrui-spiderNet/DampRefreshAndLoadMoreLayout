@@ -55,6 +55,8 @@ dependencies {
 DampRecyclerViewChild继承了RecyclerView，使用与RecyclerView一样。
 ```
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
+
+![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
 ### 3.添加下拉刷新和下拉加载功能
 
 - #### 设置下拉刷新功能 
