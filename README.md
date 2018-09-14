@@ -6,6 +6,12 @@
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
 3. 可以实现刷新和加载更多的功能。
 4. 将头部和底部与容器分离，提供接口返回相关参数，可以根据返回参数完全自定义自己想要的刷新头部和加载底部。
+###实现效果
+```
+这句是重点！刷新和加载的动画只是默认的，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，可以根据自己需求自定义刷新和加载！
+```
+![](https://github.com/JzyCc/Material-library/blob/master/DampRefreshAndLoadMoreDemo_1.gif)
+
 
 ## 使用
 ### 1. 添加依赖
