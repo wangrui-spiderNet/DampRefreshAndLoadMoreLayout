@@ -87,7 +87,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
     @Override
     public void getScrollChanged(int dy, int topViewPosition) {
-        if((mTopViewHeight+topViewPosition)>-mMeasureHeight&&topViewPosition<0&&dy<0&&isRefreshState!=REFRESH_ING) {
+        if((mTopViewHeight+topViewPosition)>mMeasureHeight&&topViewPosition<0&&dy<0&&isRefreshState!=REFRESH_ING) {
             ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
         }
         if(topViewPosition>=0){
