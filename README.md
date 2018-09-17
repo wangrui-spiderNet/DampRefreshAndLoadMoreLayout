@@ -1,5 +1,5 @@
 # DampRefreshAndLoadMoreLayout使用手册
-![](https://img.shields.io/badge/Version-v1.0.0-brightgreen.svg)
+![](https://img.shields.io/badge/Version-v1.1.1-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
 - [此处附上demo地址](https://github.com/JzyCc/Android_Damp-Refresh-LoadMore_RecyclerView)
 1. recyclerview在它里面可以更灵活的转交事件。
@@ -11,7 +11,7 @@
 以下是是默认的刷新加载动画，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，
 可以根据自己需求自定义刷新和加载！
 ```
-![](https://github.com/JzyCc/Material-library/blob/master/DampRefreshAndLoadMoreDemo_1.gif)
+![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_2.gif)   ![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_1.gif)
 
 
 ## 使用
@@ -31,7 +31,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.0.0'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.1.1'
 }
 ```
 
@@ -55,6 +55,8 @@ dependencies {
 DampRecyclerViewChild继承了RecyclerView，使用与RecyclerView一样。
 ```
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
+
+![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
 ### 3.添加下拉刷新和下拉加载功能
 
 - #### 设置下拉刷新功能 
