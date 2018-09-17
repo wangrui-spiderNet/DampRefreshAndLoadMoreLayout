@@ -53,7 +53,4 @@ public class DampRecyclerViewChild extends RecyclerView  {
         return super.dispatchTouchEvent(ev);
     }
 
-    public void setTrue(){
-        getParent().requestDisallowInterceptTouchEvent(true);
-    }
 }

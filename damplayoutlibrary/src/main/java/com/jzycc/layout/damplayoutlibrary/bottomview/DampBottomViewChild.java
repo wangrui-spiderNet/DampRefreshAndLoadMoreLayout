@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.jzycc.layout.damplayoutlibrary.R;
 
@@ -23,6 +24,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     private ImageView ivLoad;
     private ImageView ivCenter;
     private ObjectAnimator animator;
+    private TextView tvLoadOver;
     public final static int DAMPBOTTOMVIEW_HEIGHT = 60;
     public DampBottomViewChild(@NonNull Context context) {
         super(context);
@@ -45,12 +47,15 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
         View inflate = inflate(getContext(), R.layout.damp_bottom_view, this);
         ivLoad = (ImageView)inflate.findViewById(R.id.iv_load);
         ivCenter = (ImageView)inflate.findViewById(R.id.iv_center);
+        tvLoadOver = (TextView)inflate.findViewById(R.id.tv_loadOver);
 
     }
 
     @Override
     public void startLoadMore() {
         ivLoad.setVisibility(View.VISIBLE);
+        ivCenter.setVisibility(View.VISIBLE);
+        tvLoadOver.setVisibility(View.GONE);
         animator = ObjectAnimator.ofFloat(ivLoad,"rotation",0f,-360f);
         animator.setDuration(1500);
         animator.setRepeatCount(-1);
@@ -81,11 +86,13 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     }
 
     @Override
-    public void cannotLoadMore() {
+    public void loadOver() {
         if(animator!=null){
             animator.cancel();
         }
         ivLoad.setVisibility(View.GONE);
+        ivCenter.setVisibility(View.GONE);
+        tvLoadOver.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -96,6 +103,14 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     public void setImageColorResource(int color){
         ivLoad.setColorFilter(color);
         ivCenter.setColorFilter(color);
+    }
+
+    public void setTextColorResource(int color){
+        tvLoadOver.setTextColor(color);
+    }
+
+    public void setLoadOverText(String s){
+        tvLoadOver.setText(s);
     }
 
 }

@@ -408,6 +408,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                         }
                     }
                 }
+                break;
             case MotionEvent.ACTION_UP:
                 //重置必须要重置的状态
                 resetState();
@@ -927,7 +928,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         final int lastValue = mChangedMiddleHeight;
 
         preAnimationValue = 0;
-
         final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
         animator.setDuration(animationDuration);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -950,6 +950,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                 if((int)animation.getAnimatedValue() == lastValue){
                     isAnimationPlay = false;
+                    if(mDampLoadMoreListenerInChild!=null){
+                        mDampLoadMoreListenerInChild.loadOver();
+                    }
                 }
             }
         });
@@ -1274,12 +1277,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     }
 
     public void loadOver(){
-        isLoadMoreState = LOAD_MORE_OVER;
         startDampMiddleAndBottomAnimationOnLoadOver();
         mChangedMiddleHeight = 0;
-        if(mDampLoadMoreListenerInChild!=null){
-            mDampLoadMoreListenerInChild.cannotLoadMore();
-        }
+        isLoadMoreState = LOAD_MORE_OVER;
     }
 
     public void setAnimationDuration(int duration){

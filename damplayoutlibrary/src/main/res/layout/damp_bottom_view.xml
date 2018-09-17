@@ -15,5 +15,13 @@
         android:layout_width="8dp"
         android:layout_height="8dp"
         android:src="@drawable/circle_point"/>
+    <TextView
+        android:id="@+id/tv_loadOver"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/load_over"
+        android:textSize="14sp"
+        android:textColor="#515151"
+        android:layout_centerInParent="true" />
 </RelativeLayout>
 
