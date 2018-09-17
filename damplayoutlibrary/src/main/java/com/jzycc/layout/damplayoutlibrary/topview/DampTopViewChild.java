@@ -100,13 +100,13 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
             }
         }
         if(isRefreshState == REFRESH_READY&&topViewPosition<=0){
-            tvRefreshState.setText("下拉刷新");
+            tvRefreshState.setText(R.string.damplayout_pull_down_refresh);
         }
     }
 
     @Override
     public void refreshComplete() {
-        tvRefreshState.setText("刷新完成");
+        tvRefreshState.setText(R.string.damplayout_complete_refresh);
         if(animator!=null){
             animator.cancel();
         }
@@ -115,7 +115,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     @Override
     public void refreshing() {
         isRefreshState = REFRESH_ING;
-        tvRefreshState.setText("正在刷新");
+        tvRefreshState.setText(R.string.damplayout_refreshing);
         ivRefreshState.setImageResource(R.drawable.refresh_ing);
         startImageRotation();
     }
@@ -123,13 +123,13 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     @Override
     public void refreshReady() {
         isRefreshState = REFRESH_READY;
-        tvRefreshState.setText("松开刷新");
+        tvRefreshState.setText(R.string.damplayout_loosen_refresh);
     }
 
 
     @Override
     public void shouldInitialize() {
-        tvRefreshState.setText("下拉刷新");
+        tvRefreshState.setText(R.string.damplayout_pull_down_refresh);
         ivRefreshState.setRotation(0);
         ivRefreshState.setImageResource(R.drawable.pull_down);
         isRefreshState = REFRESH_PRE;
