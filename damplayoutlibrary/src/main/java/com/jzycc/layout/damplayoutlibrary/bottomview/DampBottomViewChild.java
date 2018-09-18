@@ -6,7 +6,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
@@ -14,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.jzycc.layout.damplayoutlibrary.R;
+
 
 /**
  * author Jzy(Xiaohuntun)
@@ -65,24 +65,10 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
 
     @Override
     public void stopLoadMore() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(200);
-                    mContext.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(animator!=null){
-                                animator.cancel();
-                            }
-                        }
-                    });
-                }catch (InterruptedException e){
-                    Log.e("DampBottomViewChild", "run: ",e );
-                }
-            }
-        });
+        //结束动画
+        if(animator!=null){
+            animator.cancel();
+        }
     }
 
     @Override

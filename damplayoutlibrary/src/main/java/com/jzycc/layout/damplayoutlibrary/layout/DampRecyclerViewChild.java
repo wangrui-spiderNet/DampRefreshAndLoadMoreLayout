@@ -10,7 +10,7 @@ import android.view.MotionEvent;
  * author Jzy(Xiaohuntun)
  * date 18-9-4
  */
-public class DampRecyclerViewChild extends RecyclerView  {
+public class DampRecyclerViewChild extends RecyclerView {
     private int mInitialDownY;
 
     public DampRecyclerViewChild(Context context) {

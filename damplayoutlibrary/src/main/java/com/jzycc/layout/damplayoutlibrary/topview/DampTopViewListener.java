@@ -14,4 +14,6 @@ public interface DampTopViewListener {
     void refreshReady();
 
     void shouldInitialize();
+
+    void refreshCannot();
 }

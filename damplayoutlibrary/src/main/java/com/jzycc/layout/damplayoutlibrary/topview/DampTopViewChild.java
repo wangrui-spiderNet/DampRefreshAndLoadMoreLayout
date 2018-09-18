@@ -31,7 +31,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
     private int isRefreshState;
 
-    public final static int DAMPTOPVIEW_HEIGHT = 60;
+    public final static int DAMPTOPVIEW_HEIGHT = 40;
 
 
     /**
@@ -80,26 +80,26 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
         ivRefreshState = (ImageView)inflate.findViewById(R.id.iv_refresh_state);
 
-        mTopViewHeight = (float) dp2px(mContext,60);
+        mTopViewHeight = (float) dp2px(mContext,DAMPTOPVIEW_HEIGHT);
 
         mMeasureHeight = (float) dp2px(mContext,26);
     }
 
     @Override
     public void getScrollChanged(int dy, int topViewPosition) {
-        if((mTopViewHeight+topViewPosition)>mMeasureHeight&&topViewPosition<0&&dy<0&&isRefreshState!=REFRESH_ING) {
+        if(topViewPosition>=0&&dy<0&&isRefreshState!=REFRESH_ING) {
             ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
         }
-        if(topViewPosition>=0){
+        if(topViewPosition>=mTopViewHeight){
             ivRefreshState.setRotation(180);
         }
-        if(dy>0&&topViewPosition<=0){
+        if(dy>0&&topViewPosition>=0&&topViewPosition<=mTopViewHeight){
             ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
-            if((mTopViewHeight-mMeasureHeight)<=-topViewPosition){
+            if((mTopViewHeight-mMeasureHeight)<=0){
                 ivRefreshState.setRotation(0);
             }
         }
-        if(isRefreshState == REFRESH_READY&&topViewPosition<=0){
+        if(isRefreshState == REFRESH_READY&&topViewPosition<=mTopViewHeight){
             tvRefreshState.setText(R.string.damplayout_pull_down_refresh);
         }
     }
@@ -136,8 +136,12 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
 
     }
 
+    @Override
+    public void refreshCannot() {
+    }
+
     private float measureImageRotation(float topViewPosition){
-        float rotation = (mTopViewHeight-mMeasureHeight-topViewPosition)/(mTopViewHeight-mMeasureHeight)*180;
+        float rotation = -(topViewPosition)/(mTopViewHeight)*180;
         return rotation;
     }
 
@@ -147,7 +151,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
      * @return px
      * 将dp转化为px
      */
-    private int dp2px(Context context,float dpValue){
+    private int dp2px(Context context, float dpValue){
         float scale=context.getResources().getDisplayMetrics().density;
         return (int)(dpValue*scale+0.5f);
     }
