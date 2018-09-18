@@ -155,6 +155,11 @@ public class TopViewChild extends FrameLayout implements DampTopViewListener {
     public void shouldInitialize() {
         //需要初始化的步骤，此处在按下屏幕并下拉时触发
     }
+    
+    @Override
+    public void refreshCannot() {
+        //此时松手不能触发刷新
+    }
 }
 ```
 提供了DampTopViewListener接口来返回当前容器的刷新状态，可以通过这些来实现刷新的动画。
@@ -236,3 +241,9 @@ setMaxTopValue(int value)
 ```
 setMaxBottomValue(int value)
 ```
+### 7.已有TopView和BottomView
+1.DampTopViewChild
+
+2.DampBottomViewChild
+
+3.SwipeTopView
