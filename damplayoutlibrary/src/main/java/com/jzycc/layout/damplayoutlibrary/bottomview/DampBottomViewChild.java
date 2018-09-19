@@ -26,6 +26,29 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     private ObjectAnimator animator;
     private TextView tvLoadOver;
     public final static int DAMPBOTTOMVIEW_HEIGHT = 60;
+    private int isLoadState = 0;
+
+    /**
+     * 加载相关操作前的状态
+     */
+    private static final int LOAD_MORE_PRE = 0;
+
+    /**
+     * 加载中
+     */
+    private static final int LOAD_MORE_ING = 1;
+
+    /**
+     * 所有数据加载完成
+     */
+    private static final int LOAD_MORE_OVER = 2;
+
+    /**
+     * 加载完成
+     */
+    private static final int LOAD_MORE_ING_II = 3;
+
+
     public DampBottomViewChild(@NonNull Context context) {
         super(context);
         mContext = (Activity) context;
@@ -53,6 +76,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
 
     @Override
     public void startLoadMore() {
+        isLoadState = LOAD_MORE_ING;
         ivLoad.setVisibility(View.VISIBLE);
         ivCenter.setVisibility(View.VISIBLE);
         tvLoadOver.setVisibility(View.GONE);
@@ -65,7 +89,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
 
     @Override
     public void stopLoadMore() {
-        //结束动画
+        isLoadState = LOAD_MORE_PRE;
         if(animator!=null){
             animator.cancel();
         }
@@ -73,6 +97,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
 
     @Override
     public void loadOver() {
+        isLoadState = LOAD_MORE_OVER;
         if(animator!=null){
             animator.cancel();
         }

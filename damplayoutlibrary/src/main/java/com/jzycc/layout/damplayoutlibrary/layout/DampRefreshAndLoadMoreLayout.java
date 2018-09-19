@@ -2,6 +2,7 @@ package com.jzycc.layout.damplayoutlibrary.layout;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -61,7 +62,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private static final int LOAD_MORE_PRE = 0;
 
     /**
-     * 加载中
+     * 加载中 用于判断是否转交事件
      */
     private static final int LOAD_MORE_ING = 1;
 
@@ -71,14 +72,24 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private static final int LOAD_MORE_OVER = 2;
 
     /**
-     * 加载完成
+     * 加载中
      */
     private static final int LOAD_MORE_ING_II = 3;
+
+    /**
+     * 加载完成
+     */
+    private static final int LOAD_MORE_COMPLETE = 4;
 
     /**
      * 记录当前加载状态
      */
     private int isLoadMoreState = 0;
+
+    /**
+     * 手指仍在滑动时判断是否应该将事件交给middleView;
+     */
+    private boolean isShouldScrollMiddleView = false;
 
     /**
      *不实现Damp
@@ -278,6 +289,13 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
      */
     private List<DampLoadMoreListener> mDampLoadMoreListeners = new ArrayList<>();
 
+    private ValueAnimator loadAnimator;
+
+    private boolean isShouldStopLoadAnimation = false;
+
+    private LayoutParams middleParams;
+
+    private LayoutParams bottomParams;
 
 
     public DampRefreshAndLoadMoreLayout(Context context) {
@@ -304,6 +322,8 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         super.onFinishInflate();
         if(getChildCount()>0){
             middleView = getChildAt(0);
+
+            middleParams = (LayoutParams) middleView.getLayoutParams();
             initDampUpGlideListener();
         }
     }
@@ -312,6 +332,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         this.setOrientation(LinearLayout.VERTICAL);
         maxTopValue = dp2px(mContext,200);
         maxBottomValue = dp2px(mContext,200);
+
     }
 
     private void initDampUpGlideListener(){
@@ -346,11 +367,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 if(isLoadMoreState == LOAD_MORE_ING){
                     isDampTopOrBottom = DAMP_BOTTOM;
                     return true;
-                }
-                if(isRefreshState==REFRESH_PRE){
-                    if(mDampRefreshListenerInChild!=null){
-                        mDampRefreshListenerInChild.shouldInitialize();
-                    }
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -737,7 +753,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     //判断上述前置条件，模拟down事件激活拦截方法，将事件交由子View
                     sendDownEvent(mLastMoveMotionEvent);
                     resetState();
+                }else if(isShouldScrollMiddleView){
+                    isShouldScrollMiddleView =false;
+                    sendDownEvent(mLastMoveMotionEvent);
                 }
+//                else if(!canScrollVertically(1)&&!canScrollVertically(-1)){
+//                    sendDownEvent(mLastMoveMotionEvent);
+//                    resetState();
+//                }
                 break;
             case MotionEvent.ACTION_CANCEL:
                 break;
@@ -892,9 +915,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
         preAnimationValue = 0;
 
-        final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight-mInitialBottomViewHeight);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        loadAnimator = ValueAnimator.ofInt(0,mChangedMiddleHeight-mInitialBottomViewHeight);
+        loadAnimator.setDuration(animationDuration);
+        loadAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 middleView.layout(middleView.getLeft(),topMiddle+(int)animation.getAnimatedValue(),middleView.getRight(),bottomMiddle+(int)animation.getAnimatedValue());
@@ -912,10 +935,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 preAnimationValue = (int)animation.getAnimatedValue();
                 if((int)animation.getAnimatedValue() == lastValue){
                     isAnimationPlay = false;
+                    if(isShouldStopLoadAnimation){
+                        isShouldStopLoadAnimation = false;
+                        stopLoadMoreAnimation();
+                    }
                 }
             }
         });
-        animator.start();
+        loadAnimator.start();
         isAnimationPlay = true;
     }
 
@@ -1220,13 +1247,16 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                     if((int)animation.getAnimatedValue() == mInitialTopViewMarginTop){
                         if(mDampRefreshListenerInChild!=null){
-                            mDampRefreshListenerInChild.refreshComplete();
+                            mDampRefreshListenerInChild.shouldInitialize();
                         }
                         isAnimationPlay = false;
                     }
                 }
             });
             animator.start();
+            if(mDampRefreshListenerInChild!=null){
+                mDampRefreshListenerInChild.refreshComplete();
+            }
             isAnimationPlay = true;
             isRefreshState = REFRESH_PRE;
             isLoadMoreState = LOAD_MORE_PRE;
@@ -1239,51 +1269,82 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
      * 加载结束
      */
     public void stopLoadMoreAnimation(){
-        final int topMiddle = middleView.getTop();
-        final int bottomMiddle = middleView.getBottom();
-        final int topBottom = bottomView.getTop();
-        final int bottomBottom = bottomView.getBottom();
-        final int lastValue = mChangedMiddleHeight;
-        preAnimationValue = 0;
-        final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
-                setBottomViewLayout(bottomView,topBottom,bottomBottom,(int)animation.getAnimatedValue(),mInitialBottomViewHeight);
+        if(isAnimationPlay){
+            isShouldStopLoadAnimation = true;
+        }else if(isUpglide == UPGLIDE_ING){
+            resetState();
+            stopLoadMoreAnimation();
+            isShouldScrollMiddleView = true;
+        } else{
+//            final int topMiddle = middleView.getTop();
+//            final int bottomMiddle = middleView.getBottom();
+//            final int topBottom = bottomView.getTop();
+//            final int bottomBottom = bottomView.getBottom();
+//            final int lastValue = mChangedMiddleHeight;
+//            preAnimationValue = 0;
+//            final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
+//            animator.setDuration(animationDuration);
+//            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                @Override
+//                public void onAnimationUpdate(ValueAnimator animation) {
+//                    setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
+//                    setBottomViewLayout(bottomView,topBottom,bottomBottom,(int)animation.getAnimatedValue(),mInitialBottomViewHeight);
+//
+//                    preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
+//                    if(mDampLoadMoreListenerInChild!=null){
+//                        mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//
+//                    }
+//                    if(mDampLoadMoreListeners!=null){
+//                        for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
+//                            dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//                        }
+//                    }
+//                    preAnimationValue = (int)animation.getAnimatedValue();
+//
+//                    if((int)animation.getAnimatedValue() == lastValue){
+//                        if(mDampLoadMoreListenerInChild!=null){
+//                            mDampLoadMoreListenerInChild.stopLoadMore();
+//                        }
+//                        mAapter.notifyDataSetChanged();
+//                        isAnimationPlay = false;
+//                    }
+//                }
+//            });
+//            animator.start();
+//            isAnimationPlay = true;
 
-                preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
-                if(mDampLoadMoreListenerInChild!=null){
-                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+            middleView.layout(middleView.getLeft(),getTop(),middleView.getRight(),middleView.getBottom());
+            bottomView.layout(bottomView.getLeft(),getBottom(),bottomView.getRight(),getBottom()+mInitialBottomViewHeight);
 
-                }
-                if(mDampLoadMoreListeners!=null){
-                    for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
-                    }
-                }
-                preAnimationValue = (int)animation.getAnimatedValue();
+            isUpglide = UPGLIDE_PRE;
+            isLoadMoreState = LOAD_MORE_PRE;
+            mChangedMiddleHeight = 0;
 
-                if((int)animation.getAnimatedValue() == lastValue){
-                    if(mDampLoadMoreListenerInChild!=null){
-                        mDampLoadMoreListenerInChild.stopLoadMore();
-                    }
-                    isAnimationPlay = false;
-                }
+            if(mDampLoadMoreListenerInChild!=null){
+                mDampLoadMoreListenerInChild.stopLoadMore();
             }
-        });
-        animator.start();
-        isAnimationPlay = true;
 
-        isLoadMoreState = LOAD_MORE_PRE;
-        mChangedMiddleHeight = 0;
+            if(middleView instanceof DampRecyclerViewChild){
+                scrollToPosition((RecyclerView) middleView);
+            }
+        }
+    }
+
+    private void scrollToPosition(RecyclerView recyclerView){
+        recyclerView.getAdapter().notifyDataSetChanged();
+        recyclerView.scrollBy(0,mInitialBottomViewHeight);
     }
 
     public void loadOver(){
-        startDampMiddleAndBottomAnimationOnLoadOver();
-        mChangedMiddleHeight = 0;
-        isLoadMoreState = LOAD_MORE_OVER;
+        if(isUpglide == UPGLIDE_ING){
+            resetState();
+            loadOver();
+        }else {
+            startDampMiddleAndBottomAnimationOnLoadOver();
+            mChangedMiddleHeight = 0;
+            isLoadMoreState = LOAD_MORE_OVER;
+        }
     }
 
     public void setAnimationDuration(int duration){
