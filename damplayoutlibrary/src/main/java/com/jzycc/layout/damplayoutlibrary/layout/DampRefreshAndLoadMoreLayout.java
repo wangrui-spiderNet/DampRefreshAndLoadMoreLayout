@@ -11,6 +11,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewChild;
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewListener;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewChild;
@@ -935,10 +936,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 preAnimationValue = (int)animation.getAnimatedValue();
                 if((int)animation.getAnimatedValue() == lastValue){
                     isAnimationPlay = false;
-                    if(isShouldStopLoadAnimation){
-                        isShouldStopLoadAnimation = false;
-                        stopLoadMoreAnimation();
-                    }
                 }
             }
         });
@@ -1270,7 +1267,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
      */
     public void stopLoadMoreAnimation(){
         if(isAnimationPlay){
-            isShouldStopLoadAnimation = true;
+            if(loadAnimator!=null){
+                loadAnimator.cancel();
+                isAnimationPlay = false;
+            }
+            stopLoadMoreAnimation();
         }else if(isUpglide == UPGLIDE_ING){
             resetState();
             stopLoadMoreAnimation();
