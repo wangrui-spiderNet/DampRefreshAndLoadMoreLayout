@@ -13,7 +13,7 @@ import com.jzycc.layout.damplayoutlibrary.utils.PixelUtils;
  * author Jzy(Xiaohuntun)
  * date 18-9-18
  */
-public class SwipeTopView extends RelativeLayout implements DampTopViewListener{
+public class SwipeTopView extends RelativeLayout implements DampTopViewListener {
 
     /**
      * 刷新相关操作前的状态
@@ -80,7 +80,7 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener{
 
     private void initThis(){
         mCircleView = new CircleImageView(mContext,CIRCLE_BG_LIGHT);
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+        LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
         addView(mCircleView,layoutParams);
 
@@ -94,7 +94,6 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener{
         mCircleView.setAlpha(0);
         mProgress.showArrow(true);
         mProgress.setStartEndTrim(0f,0f);
-        mCircleView.setVisibility(View.GONE);
 
     }
 
@@ -110,9 +109,11 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener{
             mProgress.setArrowScale(endTrim);
             endTrim = 0.8f*endTrim;
             mProgress.setStartEndTrim(0f,endTrim);
-            startTrim = endTrim;
         }
         if(isRefreshState==REFRESH_READY){
+            startTrim = 0.8f;
+            mProgress.setAlpha(255);
+            mProgress.setArrowScale(1);
             float nowTopPosition = (float)topViewPosition;
             endTrim = nowTopPosition/(float)topViewHeight;
             endTrim = 0.8f*endTrim;
@@ -123,6 +124,7 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener{
     @Override
     public void refreshComplete() {
         mProgress.stop();
+        mCircleView.setVisibility(View.GONE);
     }
 
     @Override

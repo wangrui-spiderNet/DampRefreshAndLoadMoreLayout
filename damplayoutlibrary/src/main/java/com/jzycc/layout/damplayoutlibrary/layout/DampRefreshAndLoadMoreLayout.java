@@ -11,7 +11,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewChild;
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewListener;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewChild;
@@ -294,10 +293,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
     private boolean isShouldStopLoadAnimation = false;
 
-    private LayoutParams middleParams;
-
-    private LayoutParams bottomParams;
-
 
     public DampRefreshAndLoadMoreLayout(Context context) {
         super(context);
@@ -323,9 +318,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         super.onFinishInflate();
         if(getChildCount()>0){
             middleView = getChildAt(0);
-
-            middleParams = (LayoutParams) middleView.getLayoutParams();
-            initDampUpGlideListener();
         }
     }
 
@@ -336,8 +328,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
     }
 
-    private void initDampUpGlideListener(){
-    }
     /**
      * 初始化方法
      * 1.初始化mInitialTopViewHeight和mChangedTopViewHeight
@@ -352,12 +342,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private void resetTopViewState(){
         mChangedTopViewMarginTop = mInitialTopViewMarginTop;
     }
-
-    private void resetMiddleViewState(){
-        mChangedMiddleHeight = 0;
-    }
-
-
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -615,7 +599,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                if(isAnimationPlay == false){
+                if(!isAnimationPlay){
                     if(isDampTopOrBottom == DAMP_TOP&&isPullDownState==PULL_DOWN_ING){
                         if(topView!=null){
                             if(isRefreshState == REFRESH_CANNOT){
@@ -758,10 +742,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     isShouldScrollMiddleView =false;
                     sendDownEvent(mLastMoveMotionEvent);
                 }
-//                else if(!canScrollVertically(1)&&!canScrollVertically(-1)){
-//                    sendDownEvent(mLastMoveMotionEvent);
-//                    resetState();
-//                }
                 break;
             case MotionEvent.ACTION_CANCEL:
                 break;
@@ -1272,7 +1252,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 isAnimationPlay = false;
             }
             stopLoadMoreAnimation();
-        }else if(isUpglide == UPGLIDE_ING){
+        }else if(isUpglide == UPGLIDE_ING||isDampTopOrBottom == DAMP_BOTTOM){
             resetState();
             stopLoadMoreAnimation();
             isShouldScrollMiddleView = true;
@@ -1320,21 +1300,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
             isUpglide = UPGLIDE_PRE;
             isLoadMoreState = LOAD_MORE_PRE;
-            mChangedMiddleHeight = 0;
 
             if(mDampLoadMoreListenerInChild!=null){
                 mDampLoadMoreListenerInChild.stopLoadMore();
             }
 
-            if(middleView instanceof DampRecyclerViewChild){
-                scrollToPosition((RecyclerView) middleView);
-            }
+
+            middleView.scrollBy(0,getBottom()-middleView.getBottom());
+
+            mChangedMiddleHeight = 0;
         }
     }
 
     private void scrollToPosition(RecyclerView recyclerView){
-        recyclerView.getAdapter().notifyDataSetChanged();
-        recyclerView.scrollBy(0,mInitialBottomViewHeight);
+        recyclerView.scrollBy(0,getBottom()-middleView.getBottom());
     }
 
     public void loadOver(){
