@@ -11,5 +11,5 @@ public interface DampBottomViewListener {
 
     void loadOver();
 
-    void getScrollChanged(int dy, int topViewPosition);
+    void onScrollChanged(int dy, int topViewPosition);
 }

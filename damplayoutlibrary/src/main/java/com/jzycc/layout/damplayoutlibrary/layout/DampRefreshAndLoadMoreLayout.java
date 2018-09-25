@@ -263,7 +263,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
 
     public interface DampRefreshListener {
-        void getScrollChanged(int dy, int topViewPosition);
+        void onScrollChanged(int dy, int topViewPosition);
 
         void startRefresh();
     }
@@ -279,7 +279,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private DampBottomViewListener mDampLoadMoreListenerInChild;
 
     public interface DampLoadMoreListener {
-        void getScrollChanged(int dy, int bottomViewPosition);
+        void onScrollChanged(int dy, int bottomViewPosition);
 
         void startLoadMore();
     }
@@ -479,11 +479,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                                     mChangedTopViewMarginTop = mInitialTopViewMarginTop;
                                 }
                                 if(mDampRefreshListenerInChild!=null){
-                                    mDampRefreshListenerInChild.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
+                                    mDampRefreshListenerInChild.onScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
                                 }
                                 if(mDampRefreshListeners!=null){
                                     for(DampRefreshListener dampRefreshListener : mDampRefreshListeners){
-                                        dampRefreshListener.getScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
+                                        dampRefreshListener.onScrollChanged((int)(offsetY*measureDampTopValue(mChangedTopViewMarginTop)),mChangedTopViewMarginTop);
                                     }
                                 }
                             }
@@ -534,11 +534,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                                     if(mDampLoadMoreListeners!=null){
                                         for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-                                            dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                            dampLoadMoreListener.onScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
                                         }
                                     }
                                     if(mDampLoadMoreListenerInChild!=null){
-                                        mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                        mDampLoadMoreListenerInChild.onScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
                                     }
                                 }
                             }else {
@@ -566,11 +566,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                                     if(mDampLoadMoreListeners!=null){
                                         for(DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners){
-                                            dampLoadMoreListener.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                            dampLoadMoreListener.onScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
                                         }
                                     }
                                     if(mDampLoadMoreListenerInChild!=null){
-                                        mDampLoadMoreListenerInChild.getScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
+                                        mDampLoadMoreListenerInChild.onScrollChanged((int) nowOffsetY,mChangedMiddleHeight);
                                     }
                                 }
                             }
@@ -805,12 +805,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
                 preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                 if(mDampRefreshListenerInChild!=null){
-                    mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                    mDampRefreshListenerInChild.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
 
                 }
                 if(mDampRefreshListeners!=null){
                     for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
-                        dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                        dampRefreshListener.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
                     }
                 }
                 preAnimationValue = (int)animation.getAnimatedValue();
@@ -833,16 +833,15 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),0);
                 setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
                 preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                 if(mDampRefreshListenerInChild!=null){
-                    mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                    mDampRefreshListenerInChild.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
 
                 }
                 if(mDampRefreshListeners!=null){
                     for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
-                        dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                        dampRefreshListener.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
                     }
                 }
                 preAnimationValue = (int)animation.getAnimatedValue();
@@ -905,12 +904,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 bottomView.layout(bottomView.getLeft(),topBottom+(int)animation.getAnimatedValue(),bottomView.getRight(),bottomBottom+(int)animation.getAnimatedValue());
                 preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                 if(mDampLoadMoreListenerInChild!=null){
-                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                    mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 
                 }
                 if(mDampLoadMoreListeners!=null){
                     for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                        dampLoadMoreListener.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
                     }
                 }
                 preAnimationValue = (int)animation.getAnimatedValue();
@@ -944,12 +943,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                 preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                 if(mDampLoadMoreListenerInChild!=null){
-                    mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                    mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 
                 }
                 if(mDampLoadMoreListeners!=null){
                     for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-                        dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+                        dampLoadMoreListener.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
                     }
                 }
                 preAnimationValue = (int)animation.getAnimatedValue();
@@ -1212,12 +1211,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
                     preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                     if(mDampRefreshListenerInChild!=null){
-                        mDampRefreshListenerInChild.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                        mDampRefreshListenerInChild.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
 
                     }
                     if(mDampRefreshListeners!=null){
                         for(DampRefreshListener dampRefreshListener:mDampRefreshListeners){
-                            dampRefreshListener.getScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
+                            dampRefreshListener.onScrollChanged(preAnimationValue,(int)animation.getAnimatedValue());
                         }
                     }
                     preAnimationValue = (int)animation.getAnimatedValue();
@@ -1273,12 +1272,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 //
 //                    preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
 //                    if(mDampLoadMoreListenerInChild!=null){
-//                        mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//                        mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 //
 //                    }
 //                    if(mDampLoadMoreListeners!=null){
 //                        for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-//                            dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//                            dampLoadMoreListener.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 //                        }
 //                    }
 //                    preAnimationValue = (int)animation.getAnimatedValue();

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DampRefreshAndLoadMoreLayout</string>
+    <string name="damplayout_load_over">到底啦</string>
+
+    <string name="damplayout_pull_down_refresh">下拉刷新</string>
+    <string name="damplayout_complete_refresh">刷新完成</string>
+    <string name="damplayout_refreshing">正在刷新</string>
+    <string name="damplayout_loosen_refresh">松开刷新</string>
+</resources>

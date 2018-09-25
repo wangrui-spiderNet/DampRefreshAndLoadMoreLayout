@@ -98,7 +98,7 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener 
     }
 
     @Override
-    public void getScrollChanged(int dy, int topViewPosition) {
+    public void onScrollChanged(int dy, int topViewPosition) {
         if(topViewPosition>=0&&(isRefreshState == REFRESH_PRE||isRefreshState == REFRESH_CANNOT)){
             float nowTopPosition = (float)topViewPosition;
             swipeAlpha = nowTopPosition*255/(float) topViewHeight;

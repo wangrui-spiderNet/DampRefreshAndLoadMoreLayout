@@ -107,7 +107,7 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     }
 
     @Override
-    public void getScrollChanged(int dy, int changedBottomViewPosition) {
+    public void onScrollChanged(int dy, int changedBottomViewPosition) {
 
     }
 
