@@ -11,6 +11,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewChild;
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewListener;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewChild;
@@ -24,6 +25,9 @@ import java.util.List;
  * date 18-9-4
  */
 public class DampRefreshAndLoadMoreLayout extends LinearLayout {
+    private static final String TAG = "DampLayout";
+
+
     private Context mContext;
 
     /**
@@ -92,17 +96,17 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
     private boolean isShouldScrollMiddleView = false;
 
     /**
-     *不实现Damp
+     *此时middleView处理事件
      */
     private static final int DAMP_NONE = 0;
 
     /**
-     * 顶部可以实现damp
+     * 顶部可以下拉
      */
     private static final int DAMP_TOP = 1;
 
     /**
-     * 底部可以实现damp
+     * 底部可以上拉
      */
     private static final int DAMP_BOTTOM = -1;
 
@@ -289,10 +293,21 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
      */
     private List<DampLoadMoreListener> mDampLoadMoreListeners = new ArrayList<>();
 
+    /**
+     * 加载到bottomView完全显示的动画
+     */
     private ValueAnimator loadAnimator;
+
+    private ValueAnimator defaultTopSpringbackAnimator = new ValueAnimator();
+
+    private ValueAnimator defaultBottomSpringbackAnimator = new ValueAnimator();
 
     private boolean isShouldStopLoadAnimation = false;
 
+    /**
+     * 当前追踪的手指Id
+     */
+    private int mScrollPointerId = 0;
 
     public DampRefreshAndLoadMoreLayout(Context context) {
         super(context);
@@ -345,8 +360,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()){
+
+        final int actionIndex = ev.getActionIndex();
+
+        switch (ev.getActionMasked()){
             case MotionEvent.ACTION_DOWN:
+                mScrollPointerId = ev.getPointerId(0);
                 mInitialDownY = (int)ev.getY();
                 resetState();
                 if(isLoadMoreState == LOAD_MORE_ING){
@@ -354,8 +373,21 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     return true;
                 }
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mScrollPointerId = ev.getPointerId(actionIndex);
+                mInitialDownY = (int)ev.getY(actionIndex);
+                break;
             case MotionEvent.ACTION_MOVE:
-                int nowY = (int)ev.getY();
+                final int index = ev.findPointerIndex(mScrollPointerId);
+
+                if (index < 0) {
+                    Log.e(TAG, "Error processing scroll; pointer index for id "
+                            + mScrollPointerId + " not found. Did any MotionEvents get skipped?");
+                    return false;
+                }
+
+                int nowY = (int)ev.getY(index);
+
                 int offsetY = mInitialDownY - nowY;
                 mInitialDownY = nowY;
                 if(topView!=null){
@@ -408,13 +440,22 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     }
                 }
                 break;
+            case MotionEvent.ACTION_POINTER_UP:
+                if (ev.getPointerId(actionIndex) == mScrollPointerId) {
+                    final int newIndex = actionIndex == 0 ? 1 : 0;
+                    mScrollPointerId = ev.getPointerId(newIndex);
+                    mInitialDownY = (int)ev.getY(newIndex);
+                }
+                break;
             case MotionEvent.ACTION_UP:
                 //重置必须要重置的状态
                 resetState();
+                mScrollPointerId = 0;
                 break;
             case MotionEvent.ACTION_CANCEL:
                 //重置必须要重置的状态
                 resetState();
+                mScrollPointerId = 0;
                 break;
         }
         isDampTopOrBottom = DAMP_NONE;
@@ -423,19 +464,33 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()){
+
+        final int actionIndex = event.getActionIndex();
+
+        switch (event.getActionMasked()){
             case MotionEvent.ACTION_DOWN:
+                mScrollPointerId = event.getPointerId(0);
                 mInitialDownY = (int)event.getY();
                 if(isLoadMoreState == LOAD_MORE_ING){
                     return true;
                 }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
-                mInitialDownY = (int)event.getY(0);
+                mScrollPointerId = event.getPointerId(actionIndex);
+                mInitialDownY = (int)event.getY(actionIndex);
                 break;
             case MotionEvent.ACTION_MOVE:
-                int nowY = (int)event.getY();
+                final int index = event.findPointerIndex(mScrollPointerId);
+                if(index<0){
+                    Log.e(TAG, "Error processing scroll; pointer index for id "
+                            + mScrollPointerId + " not found. Did any MotionEvents get skipped?");
+                    return false;
+                }
+
+                int nowY = (int)event.getY(index);
+
                 int offsetY = mInitialDownY - nowY;
+
                 mInitialDownY = nowY;
                 if(!isAnimationPlay){
                     if(isDampTopOrBottom == DAMP_TOP&&!middleView.canScrollVertically(-1)){
@@ -655,9 +710,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                         resetState();
                     }
                 }
+                mScrollPointerId = 0;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                mInitialDownY = (int)event.getY(1);
+                if (event.getPointerId(actionIndex) == mScrollPointerId) {
+                    final int newIndex = actionIndex == 0 ? 1 : 0;
+                    mScrollPointerId = event.getPointerId(newIndex);
+                    mInitialDownY = (int)event.getY(newIndex);
+                }
                 break;
             case MotionEvent.ACTION_CANCEL:
                 if(!isAnimationPlay){
@@ -716,6 +776,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                         resetState();
                     }
                 }
+                mScrollPointerId = 0;
                 break;
         }
         return super.onTouchEvent(event);
@@ -733,8 +794,15 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 int nowY = (int)ev.getY();
                 int offsetY = mDispatchDownY-nowY;
                 mDispatchDownY = nowY;
-                if((!canScrollVertically(-1)&&offsetY>0&&isPullDownState == PULL_DOWN_COMPLETE)
-                        ||(!canScrollVertically(1)&&offsetY<0&&isUpglide == UPGLIDE_COMPLETE)){
+
+                if((!middleView.canScrollVertically(-1) && offsetY < 0 && isPullDownState == PULL_DOWN_PRE)
+                        || (!middleView.canScrollVertically(1) && offsetY>0 && isUpglide == UPGLIDE_PRE)){
+                    //当middleView滑动到顶部或者底部，执行此方法，使得父容器可以执行拦截方法。
+                    requestDisallowInterceptTouchEvent(false);
+                }
+
+                if((!middleView.canScrollVertically(-1)&&offsetY>0&&isPullDownState == PULL_DOWN_COMPLETE)
+                        ||(!middleView.canScrollVertically(1)&&offsetY<0&&isUpglide == UPGLIDE_COMPLETE)){
                     //判断上述前置条件，模拟down事件激活拦截方法，将事件交由子View
                     sendDownEvent(mLastMoveMotionEvent);
                     resetState();
@@ -833,6 +901,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
+
                 setTopMarigin(topView,topViewMarginParams,(int)animation.getAnimatedValue(),mInitialTopViewMarginTop);
                 preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
                 if(mDampRefreshListenerInChild!=null){
@@ -993,9 +1062,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
         final int topMiddle = middleView.getTop();
         final int bottomMiddle = middleView.getBottom();
         final int lastValue = mChangedMiddleHeight;
-        ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+        defaultTopSpringbackAnimator.setIntValues(0,mChangedMiddleHeight);
+        defaultTopSpringbackAnimator.setDuration(animationDuration);
+        defaultTopSpringbackAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayoutForPullDown(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
@@ -1004,7 +1074,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 }
             }
         });
-        animator.start();
+        defaultTopSpringbackAnimator.start();
         isAnimationPlay = true;
     }
 
@@ -1104,7 +1174,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                     maxTopValue = dp2px(mContext,200-DampTopViewChild.DAMPTOPVIEW_HEIGHT);
                 }
             }catch (Exception e){
-                Log.e("DampRecyclerViewParent", "setTopView: ",e);
+                Log.e(TAG, "setTopView: ",e);
             }
         }
     }
@@ -1128,7 +1198,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
                 }
                 setTopMarigin(topView,topViewMarginParams,mInitialTopViewMarginTop,mInitialTopViewMarginTop);
             }catch (Exception e){
-                Log.e("DampRecyclerViewParent", "setTopView: ",e);
+                Log.e(TAG, "setTopView: ",e);
             }
         }
     }
@@ -1272,12 +1342,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout {
 //
 //                    preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
 //                    if(mDampLoadMoreListenerInChild!=null){
-//                        mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//                        mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 //
 //                    }
 //                    if(mDampLoadMoreListeners!=null){
 //                        for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-//                            dampLoadMoreListener.onScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
+//                            dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
 //                        }
 //                    }
 //                    preAnimationValue = (int)animation.getAnimatedValue();
