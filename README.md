@@ -1,7 +1,6 @@
 # DampRefreshAndLoadMoreLayout使用手册
 ![](https://img.shields.io/badge/Version-v1.1.6-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
-- [此处附上demo地址](https://github.com/JzyCc/Android_Damp-Refresh-LoadMore_RecyclerView)
 1. recyclerview在它里面可以更灵活的转交事件。
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
 3. 可以实现刷新和加载更多的功能。
