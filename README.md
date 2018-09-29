@@ -5,12 +5,13 @@
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
 3. 可以实现刷新和加载更多的功能。
 4. 将头部和底部与容器分离，提供接口返回相关参数，可以根据返回参数完全自定义自己想要的刷新头部和加载底部。
-###实现效果
+
+### 实现效果
 ```
 以下是是默认的刷新加载动画，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，
 可以根据自己需求自定义刷新和加载！
 ```
-![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_2.gif)   ![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_1.gif)
+![](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_1.gif)   ![](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)
 
 
 ## 使用
@@ -37,17 +38,14 @@ dependencies {
 ### 2. 在XML布局中加入如下代码
 ```
     <com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout
-        android:id="@+id/dv_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <com.jzycc.layout.damplayoutlibrary.layout.DampRecyclerViewChild
-            android:id="@+id/rv_content"
+        <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:overScrollMode="never">
-        </com.jzycc.layout.damplayoutlibrary.layout.DampRecyclerViewChild>
+        </android.support.v7.widget.RecyclerView>
     </com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout>
-
 ```
 
 ```
@@ -70,7 +68,7 @@ dampRefreshAndLoadMoreLayout.setTopView();
 ```
 dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(new DampRefreshAndLoadMoreLayout.DampRefreshListener() {
             @Override
-            public void getScrollChanged(int dy, int topViewPosition) {
+            public void onScrollChanged(int dy, int topViewPosition) {
                 //此处返回当前滑动距离和topView顶部到容器顶部的距离
             }
 
@@ -97,7 +95,7 @@ dampRefreshAndLoadMoreLayout.setBottomView();
 ```
 dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(new DampRefreshAndLoadMoreLayout.DampLoadMoreListener() {
             @Override
-            public void getScrollChanged(int dy, int bottomViewPosition) {
+            public void onScrollChanged(int dy, int bottomViewPosition) {
                 //此处返回当前滑动距离和bottomView底部到容器底部的距离
             }
 
@@ -131,7 +129,7 @@ public class TopViewChild extends FrameLayout implements DampTopViewListener {
     }
 
     @Override
-    public void getScrollChanged(int dy, int topViewPosition) {
+    public void onScrollChanged(int dy, int topViewPosition) {
          //此处返回当前滑动距离和topView顶部到容器顶部的距离
     }
 
@@ -195,7 +193,7 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
     }
 
     @Override
-    public void getScrollChanged(int dy, int topViewPosition) {
+    public void onScrollChanged(int dy, int topViewPosition) {
         //此处返回当前滑动距离和bottomView顶部到容器底部的距离
     }
 }
