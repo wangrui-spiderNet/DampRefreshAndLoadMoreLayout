@@ -48,9 +48,6 @@ dependencies {
     </com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout>
 ```
 
-```
-DampRecyclerViewChild继承了RecyclerView，使用与RecyclerView一样。
-```
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
 
 ![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
