@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * author Jzy(Xiaohuntun)
+ * author JzyCc
  * date 18-9-17
  */
 public class ListActivity extends AppCompatActivity {
@@ -35,14 +35,14 @@ public class ListActivity extends AppCompatActivity {
     private boolean loadOver = false;
     private Integer type = 0;
 
-    public static void actionStart(Context context,Integer type){
-        Intent intent = new Intent(context,ListActivity.class);
-        intent.putExtra("type",type);
+    public static void actionStart(Context context, Integer type) {
+        Intent intent = new Intent(context, ListActivity.class);
+        intent.putExtra("type", type);
         context.startActivity(intent);
     }
 
-    private void getIntentData(){
-        type = getIntent().getIntExtra("type",0);
+    private void getIntentData() {
+        type = getIntent().getIntExtra("type", 0);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class ListActivity extends AppCompatActivity {
         getIntentData();
         LinearLayoutManager layoutmanager = new LinearLayoutManager(this);
         rvContent.setLayoutManager(layoutmanager);
-        mAdapter = new ListAdapter(this,mPageList);
+        mAdapter = new ListAdapter(this, mPageList);
         rvContent.setAdapter(mAdapter);
 
         setActivityType(type);
@@ -62,7 +62,7 @@ public class ListActivity extends AppCompatActivity {
         loadZhiHuVo();
 
 
-        if(type==1||type==3||type==4||type==5){
+        if (type == 1 || type == 3 || type == 4 || type == 5) {
             dvContent.addOnDampRefreshListener(new DampRefreshAndLoadMoreLayout.DampRefreshListener() {
                 @Override
                 public void onScrollChanged(int i, int i1) {
@@ -70,7 +70,7 @@ public class ListActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void startRefresh() {
+                public void onRefreshing() {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -82,8 +82,8 @@ public class ListActivity extends AppCompatActivity {
                                         refresh();
                                     }
                                 });
-                            }catch (InterruptedException e){
-                                Log.e("jzyTest", "run: ",e );
+                            } catch (InterruptedException e) {
+                                Log.e("jzyTest", "run: ", e);
                             }
                         }
                     }).start();
@@ -91,7 +91,7 @@ public class ListActivity extends AppCompatActivity {
             });
         }
 
-        if(type == 2||type == 3 ||type ==4){
+        if (type == 2 || type == 3 || type == 4) {
             //dvContent.setAnimationDuration(20);
             dvContent.addOnDampLoadMoreListener(new DampRefreshAndLoadMoreLayout.DampLoadMoreListener() {
                 @Override
@@ -100,27 +100,27 @@ public class ListActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void startLoadMore() {
+                public void onLoading() {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                Thread.sleep(300);
+                                Thread.sleep(500);
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         loadZhiHuVo();
-                                        if(!loadOver){
-                                            if(!loadOver)
+                                        if (!loadOver) {
+                                            if (!loadOver)
                                                 dvContent.stopLoadMoreAnimation();
                                             //mAda  pter.notifyDataSetChanged();
-                                        }else {
+                                        } else {
                                             dvContent.loadOver();
                                         }
                                     }
                                 });
-                            }catch (InterruptedException e){
-                                Log.e("jzyTest", "run: ",e );
+                            } catch (InterruptedException e) {
+                                Log.e("jzyTest", "run: ", e);
                             }
                         }
                     }).start();
@@ -130,8 +130,8 @@ public class ListActivity extends AppCompatActivity {
 
     }
 
-    private void setActivityType(Integer type){
-        switch (type){
+    private void setActivityType(Integer type) {
+        switch (type) {
             case 0:
                 break;
             case 1:
@@ -145,38 +145,39 @@ public class ListActivity extends AppCompatActivity {
                 dvContent.setBottomView();
                 break;
             case 4:
-                DampTopViewChild dampTopViewChild = new DampTopViewChild(this);
-                DampBottomViewChild dampBottomViewChild = new DampBottomViewChild(this);
-                dampBottomViewChild.setImageColorResource(getResources().getColor(R.color.colorAccent));
-                dampTopViewChild.setImageColorResource(getResources().getColor(R.color.colorAccent));
-                dampTopViewChild.setTextColorResource(getResources().getColor(R.color.colorAccent));
-                dampBottomViewChild.setTextColorResource(getResources().getColor(R.color.colorAccent));
-                dampBottomViewChild.setLoadOverText("再拉裤子要掉了");
-                dvContent.setTopView(dampTopViewChild,DampTopViewChild.DAMPTOPVIEW_HEIGHT);
-                dvContent.setBottomView(dampBottomViewChild,DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
+                dvContent.setTopView(new DampTopViewChild.Builder(this)
+                        .setImageColorResource(R.color.colorAccent)
+                        .setTextColorResource(R.color.colorAccent)
+                        .build(), DampTopViewChild.DAMPTOPVIEW_HEIGHT);
+                dvContent.setBottomView(new DampBottomViewChild.Builder(this)
+                        .setImageColorResource(R.color.colorAccent)
+                        .setTextColorResource(R.color.colorAccent)
+                        .setLoadOverText("再拉裤子要掉了")
+                        .build(), DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
                 break;
             case 5:
                 SwipeTopView swipeTopView = new SwipeTopView(this);
-                dvContent.setTopView(swipeTopView,SwipeTopView.SWIPETOPVIEW_HEIGHT);
+                dvContent.setTopView(swipeTopView, SwipeTopView.SWIPETOPVIEW_HEIGHT);
                 break;
         }
 
     }
 
-    private void initView(){
+    private void initView() {
         dvContent = (DampRefreshAndLoadMoreLayout) findViewById(R.id.dv_content);
-        rvContent = (RecyclerView)findViewById(R.id.rv_content);
+        rvContent = (RecyclerView) findViewById(R.id.rv_content);
     }
 
 
-    private void setZhiHuVo(){
+    private void setZhiHuVo() {
         String[] images = Content.images.split(",");
         String[] titles = Content.titles.split("&&");
-        for(int i = 0 ; i < images.length ; i++){
-            mList.add(new ZhiHuDto(titles[i],images[i]));
+        for (int i = 0; i < images.length; i++) {
+            mList.add(new ZhiHuDto(titles[i], images[i]));
         }
     }
-    private void refresh(){
+
+    private void refresh() {
         loadOver = false;
         count = 0;
         mPageList.clear();
@@ -184,17 +185,18 @@ public class ListActivity extends AppCompatActivity {
         dvContent.stopRefreshAnimation();
         mAdapter.notifyDataSetChanged();
     }
-    private void loadZhiHuVo(){
-        if( count+1<=mList.size()/pageSize){
+
+    private void loadZhiHuVo() {
+        if (count + 1 <= mList.size() / pageSize) {
             int length = mPageList.size();
-            for (int i = count*pageSize; i<count*pageSize+pageSize;i++){
+            for (int i = count * pageSize; i < count * pageSize + pageSize; i++) {
                 mPageList.add(mList.get(i));
             }
-            if(mAdapter!=null) {
-               mAdapter.notifyItemRangeInserted(length,pageSize);
+            if (mAdapter != null) {
+                mAdapter.notifyItemRangeInserted(length, pageSize);
             }
             count++;
-        }else {
+        } else {
             loadOver = true;
         }
     }

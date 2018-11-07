@@ -19,7 +19,7 @@ import com.jzycc.layout.damplayoutlibrary.R;
  * author Jzy(Xiaohuntun)
  * date 18-9-6
  */
-public class DampBottomViewChild extends FrameLayout implements DampBottomViewListener{
+public class DampBottomViewChild extends FrameLayout implements DampBottomViewListener {
     private Activity mContext;
     private ImageView ivLoad;
     private ImageView ivCenter;
@@ -66,21 +66,22 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     }
 
 
-    private void initThis(){
+    private void initThis() {
         View inflate = inflate(getContext(), R.layout.damp_bottom_view, this);
-        ivLoad = (ImageView)inflate.findViewById(R.id.iv_load);
-        ivCenter = (ImageView)inflate.findViewById(R.id.iv_center);
-        tvLoadOver = (TextView)inflate.findViewById(R.id.tv_loadOver);
-
+        ivLoad = (ImageView) inflate.findViewById(R.id.iv_load);
+        ivCenter = (ImageView) inflate.findViewById(R.id.iv_center);
+        tvLoadOver = (TextView) inflate.findViewById(R.id.tv_loadOver);
+        setVisibility(View.GONE);
     }
 
     @Override
-    public void startLoadMore() {
+    public void onLoading() {
+        setVisibility(View.VISIBLE);
         isLoadState = LOAD_MORE_ING;
         ivLoad.setVisibility(View.VISIBLE);
         ivCenter.setVisibility(View.VISIBLE);
         tvLoadOver.setVisibility(View.GONE);
-        animator = ObjectAnimator.ofFloat(ivLoad,"rotation",0f,-360f);
+        animator = ObjectAnimator.ofFloat(ivLoad, "rotation", 0f, -360f);
         animator.setDuration(1500);
         animator.setRepeatCount(-1);
         animator.setInterpolator(new LinearInterpolator());
@@ -88,17 +89,19 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
     }
 
     @Override
-    public void stopLoadMore() {
+    public void onComplete() {
         isLoadState = LOAD_MORE_PRE;
-        if(animator!=null){
+        if (animator != null) {
             animator.cancel();
         }
+        setVisibility(View.GONE);
     }
 
     @Override
-    public void loadOver() {
+    public void onLoaded() {
+        setVisibility(View.VISIBLE);
         isLoadState = LOAD_MORE_OVER;
-        if(animator!=null){
+        if (animator != null) {
             animator.cancel();
         }
         ivLoad.setVisibility(View.GONE);
@@ -111,17 +114,49 @@ public class DampBottomViewChild extends FrameLayout implements DampBottomViewLi
 
     }
 
-    public void setImageColorResource(int color){
-        ivLoad.setColorFilter(color);
-        ivCenter.setColorFilter(color);
+    public void setImageColorResource(int color) {
+        ivLoad.setColorFilter(mContext.getResources().getColor(color));
+        ivCenter.setColorFilter(mContext.getResources().getColor(color));
     }
 
-    public void setTextColorResource(int color){
-        tvLoadOver.setTextColor(color);
+    public void setTextColorResource(int color) {
+        tvLoadOver.setTextColor(mContext.getResources().getColor(color));
     }
 
-    public void setLoadOverText(String s){
+    public void setLoadOverText(String s) {
         tvLoadOver.setText(s);
     }
 
+    public static class Builder {
+
+        private Context context;
+
+        private DampBottomViewChild viewChild;
+
+        public Builder(Context context) {
+            this.context = context;
+            viewChild = new DampBottomViewChild(context);
+        }
+
+        public Builder setImageColorResource(int colorResource) {
+            viewChild.setImageColorResource(colorResource);
+            return this;
+        }
+        public Builder setTextColorResource(int color) {
+            viewChild.setTextColorResource(color);
+            return this;
+        }
+
+        public Builder setLoadOverText(String s) {
+            viewChild.setLoadOverText(s);
+            return this;
+        }
+
+        public DampBottomViewChild build() {
+            if(viewChild == null){
+                viewChild = new DampBottomViewChild(context);
+            }
+            return viewChild;
+        }
+    }
 }

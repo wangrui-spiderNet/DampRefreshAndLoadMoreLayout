@@ -122,24 +122,24 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener 
     }
 
     @Override
-    public void refreshComplete() {
+    public void onComplete() {
         mProgress.stop();
         mCircleView.setVisibility(View.GONE);
     }
 
     @Override
-    public void refreshing() {
+    public void onRefreshing() {
         isRefreshState = REFRESH_ING;
         mProgress.start();
     }
 
     @Override
-    public void refreshReady() {
+    public void onReady() {
         isRefreshState = REFRESH_READY;
     }
 
     @Override
-    public void shouldInitialize() {
+    public void onStart() {
         isRefreshState = REFRESH_PRE;
         mCircleView.setAlpha(0);
         mProgress.setStartEndTrim(0f,0f);
@@ -148,7 +148,7 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener 
     }
 
     @Override
-    public void refreshCannot() {
+    public void onCancel() {
         isRefreshState = REFRESH_CANNOT;
     }
 

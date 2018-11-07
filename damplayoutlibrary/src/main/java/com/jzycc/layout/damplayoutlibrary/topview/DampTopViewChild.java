@@ -74,50 +74,50 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
         mContext = context;
     }
 
-    private void initThis(){
+    private void initThis() {
         View inflate = inflate(getContext(), R.layout.damp_top_view, this);
 
-        tvRefreshState = (TextView)inflate.findViewById(R.id.tv_refresh_state);
+        tvRefreshState = (TextView) inflate.findViewById(R.id.tv_refresh_state);
 
-        ivRefreshState = (ImageView)inflate.findViewById(R.id.iv_refresh_state);
+        ivRefreshState = (ImageView) inflate.findViewById(R.id.iv_refresh_state);
 
-        mTopViewHeight = (float) dp2px(mContext,DAMPTOPVIEW_HEIGHT);
+        mTopViewHeight = (float) dp2px(mContext, DAMPTOPVIEW_HEIGHT);
 
-        mMeasureHeight = (float) dp2px(mContext,26);
+        mMeasureHeight = (float) dp2px(mContext, 26);
     }
 
     @Override
     public void onScrollChanged(int dy, int topViewPosition) {
-        if(topViewPosition<0&&isRefreshState!=REFRESH_ING){
+        if (topViewPosition < 0 && isRefreshState != REFRESH_ING) {
             ivRefreshState.setRotation(0);
         }
-        if(topViewPosition>=0&&dy<0&&isRefreshState!=REFRESH_ING) {
-            ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
+        if (topViewPosition >= 0 && dy < 0 && isRefreshState != REFRESH_ING) {
+            ivRefreshState.setRotation(measureImageRotation((float) topViewPosition));
         }
-        if(topViewPosition>=mTopViewHeight){
+        if (topViewPosition >= mTopViewHeight) {
             ivRefreshState.setRotation(180);
         }
-        if(dy>0&&topViewPosition>=0&&topViewPosition<=mTopViewHeight){
-            ivRefreshState.setRotation(measureImageRotation((float)topViewPosition));
-            if((mTopViewHeight-mMeasureHeight)<=0){
+        if (dy > 0 && topViewPosition >= 0 && topViewPosition <= mTopViewHeight) {
+            ivRefreshState.setRotation(measureImageRotation((float) topViewPosition));
+            if ((mTopViewHeight - mMeasureHeight) <= 0) {
                 ivRefreshState.setRotation(0);
             }
         }
-        if(isRefreshState == REFRESH_READY&&topViewPosition<=mTopViewHeight){
+        if (isRefreshState == REFRESH_READY && topViewPosition <= mTopViewHeight) {
             tvRefreshState.setText(R.string.damplayout_pull_down_refresh);
         }
     }
 
     @Override
-    public void refreshComplete() {
+    public void onComplete() {
         tvRefreshState.setText(R.string.damplayout_complete_refresh);
-        if(animator!=null){
+        if (animator != null) {
             animator.cancel();
         }
     }
 
     @Override
-    public void refreshing() {
+    public void onRefreshing() {
         isRefreshState = REFRESH_ING;
         tvRefreshState.setText(R.string.damplayout_refreshing);
         ivRefreshState.setImageResource(R.drawable.refresh_ing);
@@ -125,14 +125,15 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     }
 
     @Override
-    public void refreshReady() {
+    public void onReady() {
         isRefreshState = REFRESH_READY;
         tvRefreshState.setText(R.string.damplayout_loosen_refresh);
     }
 
 
     @Override
-    public void shouldInitialize() {
+    public void onStart() {
+        setVisibility(View.VISIBLE);
         tvRefreshState.setText(R.string.damplayout_pull_down_refresh);
         ivRefreshState.setRotation(0);
         ivRefreshState.setImageResource(R.drawable.pull_down);
@@ -141,11 +142,11 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     }
 
     @Override
-    public void refreshCannot() {
+    public void onCancel() {
     }
 
-    private float measureImageRotation(float topViewPosition){
-        float rotation = -(topViewPosition)/(mTopViewHeight)*180;
+    private float measureImageRotation(float topViewPosition) {
+        float rotation = -(topViewPosition) / (mTopViewHeight) * 180;
         return rotation;
     }
 
@@ -155,24 +156,48 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
      * @return px
      * 将dp转化为px
      */
-    private int dp2px(Context context, float dpValue){
-        float scale=context.getResources().getDisplayMetrics().density;
-        return (int)(dpValue*scale+0.5f);
+    private int dp2px(Context context, float dpValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 
-    private void startImageRotation(){
-        animator = ObjectAnimator.ofFloat(ivRefreshState,"rotation",0f,360f);
+    private void startImageRotation() {
+        animator = ObjectAnimator.ofFloat(ivRefreshState, "rotation", 0f, 360f);
         animator.setDuration(1000);
         animator.setRepeatCount(-1);
         animator.setInterpolator(new LinearInterpolator());
         animator.start();
     }
 
-    public void setImageColorResource(int color){
-        ivRefreshState.setColorFilter(color);
+    public void setImageColorResource(int color) {
+        ivRefreshState.setColorFilter(mContext.getResources().getColor(color));
     }
 
-    public void setTextColorResource(int color){
-        tvRefreshState.setTextColor(color);
+    public void setTextColorResource(int color) {
+        tvRefreshState.setTextColor(mContext.getResources().getColor(color));
+    }
+
+    public static class Builder{
+        private Context mContext;
+        private DampTopViewChild viewChild;
+
+        public Builder(Context mContext) {
+            this.mContext = mContext;
+            viewChild = new DampTopViewChild(mContext);
+        }
+
+        public Builder setImageColorResource(int color) {
+            viewChild.setImageColorResource(color);
+            return this;
+        }
+
+        public Builder setTextColorResource(int color) {
+            viewChild.setTextColorResource(color);
+            return this;
+        }
+
+        public DampTopViewChild build() {
+            return viewChild;
+        }
     }
 }

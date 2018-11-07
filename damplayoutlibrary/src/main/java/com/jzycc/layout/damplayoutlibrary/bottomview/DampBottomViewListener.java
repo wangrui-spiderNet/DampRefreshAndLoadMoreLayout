@@ -5,11 +5,26 @@ package com.jzycc.layout.damplayoutlibrary.bottomview;
  * date 18-9-11
  */
 public interface DampBottomViewListener {
-    void startLoadMore();
 
-    void stopLoadMore();
+    /**
+     * @param dy bottomView的偏移量
+     * @param bottomViewPosition bottomView顶部到容器顶部的距离
+     * 此方法可以监听bottomView的位置变化和具体数值
+     */
+    void onScrollChanged(int dy, int bottomViewPosition);
 
-    void loadOver();
+    /**
+     * 此时加载被触发，初始化工作也可以在此处执行
+     */
+    void onLoading();
 
-    void onScrollChanged(int dy, int topViewPosition);
+    /**
+     * 此时加载结束
+     */
+    void onComplete();
+
+    /**
+     * 此时所有数据已经加载完毕
+     */
+    void onLoaded();
 }
