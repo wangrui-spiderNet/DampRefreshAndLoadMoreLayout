@@ -1467,7 +1467,8 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
 //            });
 //            animator.start();
 //            isAnimationPlay = true;
-            middleView.layout(middleView.getLeft(), getTop(), middleView.getRight(), middleView.getBottom());
+            middleView.layout(middleView.getLeft(), getTop(), middleView.getRight(),getBottom());
+            int delayY = getBottom() - bottomView.getTop();
             bottomView.layout(bottomView.getLeft(), getBottom(), bottomView.getRight(), getBottom() + mInitialBottomViewHeight);
 
             isUpglide = UPGLIDE_PRE;
@@ -1476,9 +1477,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
             if (mDampLoadMoreListenerInChild != null) {
                 mDampLoadMoreListenerInChild.onComplete();
             }
-
-
-            middleView.scrollBy(0, getBottom() - middleView.getBottom());
+            middleView.scrollBy(0, delayY);
 
             mChangedMiddleHeight = 0;
         }
