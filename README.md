@@ -1,5 +1,5 @@
 # DampRefreshAndLoadMoreLayout使用手册
-![](https://img.shields.io/badge/Version-v1.1.7-brightgreen.svg)
+![](https://img.shields.io/badge/Version-v1.1.8-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
 1. recyclerview在它里面可以更灵活的转交事件。
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
@@ -51,12 +51,15 @@ dependencies {
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
 
 ![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
-### 3.添加下拉刷新和下拉加载功能
+### 3.添加下拉刷新和上拉加载功能
 
+**获取DampRefreshAndLoadMoreLayout实例**
+```
+dampRefreshAndLoadMoreLayout = findViewById(R.id.dll_content);
+```
 - #### 设置下拉刷新功能 
 
 ##### 设置默认刷新头部
-
 ```
 dampRefreshAndLoadMoreLayout.setTopView();
 ```
@@ -70,10 +73,28 @@ dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(new DampRefreshAndLoadMore
             }
 
             @Override
-            public void startRefresh() {
+            public void onRefreshing() {
                 //当刷新触发时在此处写刷新相关逻辑
             }
         });
+```
+或者使用Builder模式
+```
+dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
+                .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
+                .setTopView()
+                .addOnDampRefreshListener(new DampRefreshAndLoadMoreLayout.DampRefreshListener() {
+                    @Override
+                    public void onScrollChanged(int dy, int topViewPosition) {
+                        //此处返回当前滑动距离和topView顶部到容器顶部的距离
+                    }
+
+                    @Override
+                    public void onRefreshing() {
+                        //当刷新触发时在此处写刷新相关逻辑
+                    }
+                })
+                .build();
 ```
 ##### 结束刷新
 
@@ -97,11 +118,30 @@ dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(new DampRefreshAndLoadMor
             }
 
             @Override
-            public void startLoadMore() {
+            public void onLoading() {
                 //当加载更多触发时在此处写加载相关逻辑
             }
         });
 ```
+或者使用Builder模式
+```
+dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
+                .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
+                .setBottomView()
+                .addOnDampLoadMoreListener(new DampRefreshAndLoadMoreLayout.DampLoadMoreListener() {
+                    @Override
+                    public void onScrollChanged(int dy, int bottomViewPosition) {
+                        //此处返回当前滑动距离和bottomView顶部到容器底部的距离
+                    }
+
+                    @Override
+                    public void onLoading() {
+                        //当加载更多触发时在此处写加载相关逻辑
+                    }
+                })
+                .build();
+```
+
 ##### 结束加载
 
 ```
@@ -131,28 +171,28 @@ public class TopViewChild extends FrameLayout implements DampTopViewListener {
     }
 
     @Override
-    public void refreshComplete() {
+    public void onComplete() {
         //此时刷新已经完成
     }
 
     @Override
-    public void refreshing() {
+    public void onRefreshing() {
         //此时正在刷新
     }
 
     @Override
-    public void refreshReady() {
+    public void onReady() {
         //此时松手可以触发刷新
     }
 
     @Override
-    public void shouldInitialize() {
+    public void onStart() {
         //需要初始化的步骤，此处在按下屏幕并下拉时触发
     }
     
     @Override
-    public void refreshCannot() {
-        //此时松手不能触发刷新
+    public void onCancel() {
+        //此时松手不可以触发刷新
     }
 }
 ```
@@ -162,9 +202,8 @@ public class TopViewChild extends FrameLayout implements DampTopViewListener {
 dampRefreshAndLoadMoreLayout.setTopView(new TopViewChild(context),topViewHeight);
 ```
 
-```
-此处应当传入自定义topView的高度（单位：dp）
-```
+**此处应当传入自定义topView的高度（单位：dp）**
+
 - #### 自定义加载View
 ##### 新建一个Class文件,此处我继承FrameLayout，实现DampBottomViewListener接口
 
@@ -175,30 +214,39 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
     }
 
     @Override
-    public void startLoadMore() {
+    public void onLoading() {
         //此时加载被触发，初始化工作也可以在此处执行
     }
 
     @Override
-    public void stopLoadMore() {
+    public void onComplete() {
         //此时加载结束
     }
 
     @Override
-    public void cannotLoadMore() {
+    public void onLoaded() {
         //此时所有数据已经加载完毕
     }
 
     @Override
-    public void onScrollChanged(int dy, int topViewPosition) {
+    public void onScrollChanged(int dy, int bottomViewPosition) {
         //此处返回当前滑动距离和bottomView顶部到容器底部的距离
     }
 }
 ```
 ##### 添加自定义bottomView
 ```
-dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeight);
+dampRefreshAndLoadMoreLayout.setBottomView(new BottomViewChild(context),bottomViewHeight);
 ```
+或者使用Builder模式
+```
+dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
+                .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
+                .setTopView(new TopViewChild(context), topViewHeight)
+                .setBottomView(new BottomViewChild(context),bottomViewHeight)
+                .build();
+```
+
 ### 5.关于默认topView和bottomView适配不同背景色
 ##### 默认topView设置图片颜色和文本颜色
 
@@ -208,34 +256,57 @@ dampRefreshAndLoadMoreLayout.setTopView(new BottomViewChild(context),topViewHeig
  dampTopViewChild.setTextColorResource(color);//设置文本颜色
  dampRefreshAndLoadMoreLayout.setTopView(dampTopViewChild,DampTopViewChild.DAMPTOPVIEW_HEIGHT);//设置TopView
 ```
-##### 默认bottomView设置图片颜色
+##### 默认bottomView设置图片和文本颜色以及文本内容
 
 ```
  DampBottomViewChild dampBottomViewChild = new DampBottomViewChild(this);
- dampBottomViewChild.setImageColorResource(color);//设置图片颜色
+ dampBottomViewChild.setImageColorResource(color);//设置图片颜色 
+ dampBottomViewChild.setTextColorResource(color);//设置文本颜色
+ dampBottomViewChild.setLoadOverText(text);//设置加载完毕文本内容
  dampRefreshAndLoadMoreLayout.setBottomView(dampBottomViewChild,DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
 ```
+**此处应当传入自定义bottomView的高度（单位：dp）**
 
 
+或者使用Builder模式
 ```
-此处应当传入自定义bottomView的高度（单位：dp）
+dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
+                .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
+                .setTopView(new DampTopViewChild.Builder(this)
+                        .setImageColorResource(color)//设置图片颜色
+                        .setTextColorResource(color)//设置文本颜色
+                        .build(), DampTopViewChild.DAMPTOPVIEW_HEIGHT)
+                .setBottomView(new DampBottomViewChild.Builder(this)
+                        .setImageColorResource(color)//设置图片颜色 
+                        .setTextColorResource(color)//设置文本颜色
+                        .setLoadOverText(text)//设置加载完毕文本内容
+                        .build(), DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT)
+                .build();
 ```
 ### 6.其它相关API
 ##### 设置动画时长：
 ```
 setAnimationDuration(int duration)
 ```
-##### 设置最高阻尼时topView顶部距离到父容器顶部的距离（单位：dp）：
+##### 设置最高阻尼时middleView顶部距离到父容器顶部的距离（单位：dp）：
 
 ```
-setMaxTopValue(int value)
+setPullDownDampDistance(int value)
 ```
-##### 设置最高阻尼时bottom顶部距离到父容器底部部的距离（单位：dp）：
+##### 设置最高阻尼时middleView底部距离到父容器底部部的距离（单位：dp）：
 
 ```
-setMaxBottomValue(int value)
+setUpGlideDampDistance(int value)
 ```
-### 7.已有TopView和BottomView
+##### 设置下拉时最大的阻尼系数，可选范围在0f~100f之间（0f不可滑动，100f无阻尼）
+```
+setPullDownDampValue(float pullDownDampValue)
+```
+##### 设置上拉时最大的阻尼系数，可选范围在0f~100f之间（0f不可滑动，100f无阻尼）
+```
+setUpGlideDampValue(float pullDownDampValue)
+```
+### 7.可选择的topView和bottomView
 1.DampTopViewChild
 
 2.DampBottomViewChild
