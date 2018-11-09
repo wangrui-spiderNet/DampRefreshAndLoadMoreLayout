@@ -1,5 +1,5 @@
 # DampRefreshAndLoadMoreLayout使用手册
-![](https://img.shields.io/badge/Version-v1.1.8-brightgreen.svg)
+![](https://img.shields.io/badge/Version-v1.1.9-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
 1. recyclerview在它里面可以更灵活的转交事件。
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
@@ -31,7 +31,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.1.7'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.1.9'
 }
 ```
 
