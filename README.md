@@ -5,14 +5,15 @@
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
 3. 可以实现刷新和加载更多的功能。
 4. 将头部和底部与容器分离，提供接口返回相关参数，可以根据返回参数完全自定义自己想要的刷新头部和加载底部。
-5. 可以为列表分组，实现黏性头部效果 [GroupItemDecoration]()
+5. 可以为列表分组，实现黏性头部效果 [GroupItemDecoration](https://github.com/JzyCc/DampRefreshAndLoadMoreLayout/blob/master/GroupItemDecoration.md)
 
 ### 实现效果
 ```
 以下是是默认的刷新加载动画，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，
 可以根据自己需求自定义刷新和加载！
 ```
-![刷新与加载](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_1.gif)    ![SwipeRefresh](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)
+![刷新与加载](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_1.gif)    ![SwipeRefresh](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)    ![GroupItemDecoration](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/GroupItemDecoration_demo1.gif)
+
 ## 使用
 ### 1. 添加依赖
 #### 在project的build.gradle中添加仓库
