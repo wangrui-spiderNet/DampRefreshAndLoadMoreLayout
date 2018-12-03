@@ -1,4 +1,5 @@
 # DampRefreshAndLoadMoreLayout使用手册
+![](https://img.shields.io/badge/Version-v1.2.0-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
 1. 列表在它里面可以更灵活的转交事件。
 2. 默认实现仿IOS拖动带阻尼回弹的效果。
@@ -11,7 +12,7 @@
 以下是是默认的刷新加载动画，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，
 可以根据自己需求自定义刷新和加载！
 ```
-![刷新与加载](http://git.2dfire-inc.com/xiaohuntun/DampRefreshAndLoadMoreLayout/raw/master/material/DampRefreshAndLoadMoreLayoutGif_1.gif)    ![SwipeRefresh](http://git.2dfire-inc.com/xiaohuntun/DampRefreshAndLoadMoreLayout/raw/master/material/DampRefreshAndLoadMoreLayoutGif_2.gif)
+![刷新与加载](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_1.gif)    ![SwipeRefresh](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)
 ## 使用
 ### 1. 添加依赖
 #### 在project的build.gradle中添加仓库
@@ -49,7 +50,7 @@ dependencies {
 
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
 
-![默认回弹](http://git.2dfire-inc.com/xiaohuntun/DampRefreshAndLoadMoreLayout/raw/master/material/DampRefreshAndLoadMoreDemo_3.gif)
+![默认回弹](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
 
 ### 3.添加下拉刷新和上拉加载功能
 
