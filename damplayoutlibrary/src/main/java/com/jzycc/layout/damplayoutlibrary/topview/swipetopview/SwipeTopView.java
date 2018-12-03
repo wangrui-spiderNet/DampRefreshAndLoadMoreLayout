@@ -128,7 +128,7 @@ public class SwipeTopView extends RelativeLayout implements DampTopViewListener 
     }
 
     @Override
-    public void onRefreshing() {
+    public void onRefresh() {
         isRefreshState = REFRESH_ING;
         mProgress.start();
     }

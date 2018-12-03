@@ -3,6 +3,7 @@ package com.jzycc.layout.damplayoutlibrary.layout;
 import android.view.View;
 
 import com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout.Builder;
+import com.jzycc.layout.damplayoutlibrary.layout.decoration.GroupItemDecoration;
 
 /**
  * @author : Jzy
@@ -19,22 +20,22 @@ public interface DampRefreshAndLoadMoreLayoutBuilderService {
     /**
      * 设置默认topView
      */
-    Builder setTopView();
+    Builder openRefresh();
 
     /**
      * 添加自定义topView
      */
-    Builder setTopView(View view, int topViewHeight);
+    Builder openRefresh(View view, int viewHeight);
 
     /**
      * 设置默认bottomView
      */
-    Builder setBottomView();
+    Builder openLoadMore();
 
     /**
      * 设置自定义bottomView
      */
-    Builder setBottomView(View view, int bottomViewHeight);
+    Builder openLoadMore(View view, int viewHeight);
 
     /**
      * @param dampRefreshListener 添加refresh相关监听
@@ -72,6 +73,12 @@ public interface DampRefreshAndLoadMoreLayoutBuilderService {
      *                         可选范围在0f~100f之间
      */
     Builder setUpGlideDampValue(float upGlideDampValue);
+
+    /**
+     * @param groupDecoration 需要传入{@link GroupItemDecoration}实例
+     * 如果容器内的View是RecyclerView的话，调用此方法可以为recyclerView添加{@link GroupItemDecoration}
+     */
+    Builder setGroupDecoration(GroupItemDecoration groupDecoration);
 
     DampRefreshAndLoadMoreLayout build();
 }

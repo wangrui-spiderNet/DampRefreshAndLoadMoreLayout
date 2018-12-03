@@ -8,7 +8,7 @@ public interface DampTopViewListener {
 
     /**
      * @param dy topView的偏移量
-     * @param topViewPosition topView顶部到容器顶部的距离
+     * @param topViewPosition topView顶部到容器顶部的距离 (初始位置为负的topView的高度)
      * 此方法可以监听topView的位置变化和具体数值
      */
     void onScrollChanged(int dy, int topViewPosition);
@@ -31,7 +31,7 @@ public interface DampTopViewListener {
     /**
      * 此时正在刷新
      */
-    void onRefreshing();
+    void onRefresh();
 
     /**
      * 此时刷新已经完成

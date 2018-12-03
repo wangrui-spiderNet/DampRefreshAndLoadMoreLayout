@@ -60,4 +60,5 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>{
             tvItem = (TextView) itemView.findViewById(R.id.tv_title);
         }
     }
+
 }

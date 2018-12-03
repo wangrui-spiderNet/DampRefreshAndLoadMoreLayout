@@ -1,7 +1,10 @@
 package com.jzycc.layout.damplayoutlibrary.layout;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -12,6 +15,7 @@ import android.widget.LinearLayout;
 
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewChild;
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewListener;
+import com.jzycc.layout.damplayoutlibrary.layout.decoration.GroupItemDecoration;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewChild;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewListener;
 
@@ -21,12 +25,31 @@ import java.util.List;
 /**
  * author Jzy(Xiaohuntun)
  * date 18-9-4
+ *
+ * DampRefreshAndLoadMoreLayout 是一个可以为列表自由配置刷新和加载以及更多可以扩展的功能的容器，并带有可越界阻尼拉动且会回弹的功能。
+ *
+ * 刷新和加载可以通过提供的接口来自定义。
+ * 自定义刷新接口{@link DampTopViewListener} 默认刷新view {@link DampTopViewChild}
+ * 自定义加载接口{@link DampBottomViewListener} 默认加载view {@link DampBottomViewChild}
+ * 可以通过参考默认的刷新加载view来自定义你的刷新加载, 并且欢迎提供新的刷新和加载 view 加进 DampRefreshAndLoadMoreLayout 的材料库中。
+ *
+ * 具体使用可以访问gitlab: https://github.com/JzyCc/DampRefreshAndLoadMoreLayout
+ * 正在不断完善，使用过程中如有发现bug或者疑问，邮箱 mJzyCc@aliyun.com
+ *
+ * 使用注意事项：
+ * 1. DampRefreshAndLoadMoreLayout 容器中应当且只能含有一个childView(刷新和加载所需的childView容器自行处理，不包含在内)。
+ * 2. DampRefreshAndLoadMoreLayout 中的child 建议将高宽设置为 match_parent,不然可能会有不可预料的事情发生, 如需固定高宽应为 DampRefreshAndLoadMoreLayout 设置。
+ * 3. 使用 builder() 方法来配置本容器时需在配置链前端调用 attachLayout(DampRefreshAndLoadMoreLayout) 方法，
+ *    为容器传入已经存在的 DampRefreshAndLoadMoreLayout 实例, 接下来的build将会为传入的实例进行配置。
+ *    使用 builder(Context) 方法则会生成一个实例，无需调用 attachLayout(DampRefreshAndLoadMoreLayout) 方法。
+ * 4. loadOver()方法会把容器状态设置为 全部加载完成， 如果此时使用非容器刷新功能刷新列表，请调用 continueLoad(boolean type) 方法重置加载状态，参数应为true。
+ *    如果是使用容器带有的刷新功能则无需调用此方法。
+ * 5. 容器触发加载和刷新时，无论是否成功，请及时调用 stopLoadMoreAnimation() 结束加载动画以及调用 stopRefreshAnimation()结束刷新动画。
+ * 6. 请确保刷新或者加载成功后，在与Adapter绑定的数据源填充完后再调用 stopLoadMoreAnimation() 和 stopRefreshAnimation() 方法，
+ *    及时通知列表刷新是良好习惯，如果不通知列表刷新，可能会有未知的问题发生，通知刷新的操作也应在调用停止动画方法前执行。
  */
 public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRefreshAndLoadMoreLayoutService{
     private static final String TAG = "DampLayout";
-
-
-    private Context mContext;
 
     /**
      * 刷新相关操作前的状态
@@ -49,39 +72,76 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     public static final int REFRESH_ING = 3;
 
     /**
-     * 刷新完成
+     * 加载相关操作前的状态
      */
-    public static final int REFRESH_COMPLETE = 4;
+    public static final int LOAD_MORE_PRE = 0;
+
+    /**
+     * 加载中 用于判断是否转交事件
+     */
+    public static final int LOAD_MORE_ING = 1;
+
+    /**
+     * 所有数据加载完成
+     */
+    public static final int LOAD_MORE_OVER = 2;
+
+    /**
+     * 加载中
+     */
+    public static final int LOAD_MORE_ING_II = 3;
+
+    /**
+     * 此时middleView处理事件
+     */
+    public static final int DAMP_NONE = 0;
+
+    /**
+     * 顶部可以下拉
+     */
+    public static final int DAMP_TOP = 1;
+
+    /**
+     * 底部可以上拉
+     */
+    public static final int DAMP_BOTTOM = -1;
+
+    /**
+     * 下拉前
+     */
+    public static final int PULL_DOWN_PRE = 0;
+
+    /**
+     * 下拉中
+     */
+    public static final int PULL_DOWN_ING = 1;
+
+    /**
+     * 下拉完成
+     */
+    public static final int PULL_DOWN_COMPLETE = 2;
+
+    /**
+     * 上滑前
+     */
+    public static final int UPGLIDE_PRE = 0;
+
+    /**
+     * 上滑中
+     */
+    public static final int UPGLIDE_ING = 1;
+
+    /**
+     * 上滑完成
+     */
+    public static final int UPGLIDE_COMPLETE = 2;
+
+    private Context mContext;
 
     /**
      * 记录当前刷新状态
      */
     private int isRefreshState = 0;
-
-    /**
-     * 加载相关操作前的状态
-     */
-    private static final int LOAD_MORE_PRE = 0;
-
-    /**
-     * 加载中 用于判断是否转交事件
-     */
-    private static final int LOAD_MORE_ING = 1;
-
-    /**
-     * 所有数据加载完成
-     */
-    private static final int LOAD_MORE_OVER = 2;
-
-    /**
-     * 加载中
-     */
-    private static final int LOAD_MORE_ING_II = 3;
-
-    /**
-     * 加载完成
-     */
-    private static final int LOAD_MORE_COMPLETE = 4;
 
     /**
      * 记录当前加载状态
@@ -94,59 +154,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     private boolean isShouldScrollMiddleView = false;
 
     /**
-     * 此时middleView处理事件
-     */
-    private static final int DAMP_NONE = 0;
-
-    /**
-     * 顶部可以下拉
-     */
-    private static final int DAMP_TOP = 1;
-
-    /**
-     * 底部可以上拉
-     */
-    private static final int DAMP_BOTTOM = -1;
-
-    /**
      * 当前拖动状态
      */
     private int isDampTopOrBottom = DAMP_NONE;
 
     /**
-     * 下拉前
-     */
-    private static final int PULL_DOWN_PRE = 0;
-
-    /**
-     * 下拉中
-     */
-    private static final int PULL_DOWN_ING = 1;
-
-    /**
-     * 下拉完成
-     */
-    private static final int PULL_DOWN_COMPLETE = 2;
-
-    /**
      * 当前下拉状态
      */
     private int isPullDownState = 0;
-
-    /**
-     * 上滑前
-     */
-    private static final int UPGLIDE_PRE = 0;
-
-    /**
-     * 上滑中
-     */
-    private static final int UPGLIDE_ING = 1;
-
-    /**
-     * 上滑完成
-     */
-    private static final int UPGLIDE_COMPLETE = 2;
 
     /**
      * 当前上滑状态
@@ -173,20 +188,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      */
     private float maxTopDampValue = 200f;
 
-    /**
-     * 是否是外部修改maxTopValue
-     */
-    private boolean isModidyMaxTopValue = false;
 
     /**
      * 底部上滑时阻尼值最大时的距离
      */
     private float maxBottomDampValue = 200f;
 
-    /**
-     * 是否外部修改MaxBottomValue
-     */
-    private boolean isModidyMaxBottomValue = false;
 
     /**
      * 保存上一次move时手指在Y轴的位置
@@ -268,13 +275,13 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     public interface DampRefreshListener {
         void onScrollChanged(int dy, int topViewPosition);
 
-        void onRefreshing();
+        void onRefresh();
     }
 
     /**
      * 用于存放监听容器刷新状态的监听器的list
      */
-    private List<DampRefreshListener> mDampRefreshListeners = new ArrayList<>();
+    private List<DampRefreshListener> mDampRefreshListeners;
 
     /**
      * topView必须要实现的监听，用于监听容器状态来做加载相关的操作
@@ -287,24 +294,29 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     public interface DampLoadMoreListener {
         void onScrollChanged(int dy, int bottomViewPosition);
 
-        void onLoading();
+        void onLoadMore();
     }
 
     /**
      * 用于存放监听容器加载状态的监听器的list
      */
-    private List<DampLoadMoreListener> mDampLoadMoreListeners = new ArrayList<>();
+    private List<DampLoadMoreListener> mDampLoadMoreListeners;
+
+    private List<DampLayoutScrollChangedListener> mDampLayoutScrollChangedListeners;
 
     /**
      * 加载到bottomView完全显示的动画
      */
-    private ValueAnimator loadAnimator;
+    private ValueAnimator loadAnimator = new ValueAnimator();
+
+    /**
+     *
+     */
+    private ValueAnimator loadOverAnimator = new ValueAnimator();
 
     private ValueAnimator defaultTopSpringbackAnimator = new ValueAnimator();
 
     private ValueAnimator defaultBottomSpringbackAnimator = new ValueAnimator();
-
-    private boolean isShouldStopLoadAnimation = false;
 
     /**
      * 当前追踪的手指Id
@@ -314,96 +326,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     private float mPullDownDampValue = 20f;
 
     private float mUpGlideDampValue = 20f;
-
-    public static class Builder implements DampRefreshAndLoadMoreLayoutBuilderService{
-
-        private DampRefreshAndLoadMoreLayout dampRefreshAndLoadMoreLayout;
-
-        public Builder(Context context) {
-            dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout(context);
-        }
-
-        public Builder(){
-
-        }
-
-        @Override
-        public Builder attachLayout(DampRefreshAndLoadMoreLayout dampRefreshAndLoadMoreLayout){
-            this.dampRefreshAndLoadMoreLayout = dampRefreshAndLoadMoreLayout;
-            return this;
-        }
-
-        @Override
-        public Builder setTopView() {
-            dampRefreshAndLoadMoreLayout.setTopView();
-            return this;
-        }
-
-        @Override
-        public Builder setTopView(View view, int topViewHeight) {
-            dampRefreshAndLoadMoreLayout.setTopView(view,topViewHeight);
-            return this;
-        }
-
-        @Override
-        public Builder setBottomView() {
-            dampRefreshAndLoadMoreLayout.setBottomView();
-            return this;
-        }
-
-        @Override
-        public Builder setBottomView(View view, int bottomViewHeight) {
-            dampRefreshAndLoadMoreLayout.setBottomView(view,bottomViewHeight);
-            return this;
-        }
-
-        @Override
-        public Builder addOnDampRefreshListener(DampRefreshListener dampRefreshListener) {
-            dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(dampRefreshListener);
-            return this;
-        }
-
-        @Override
-        public Builder addOnDampLoadMoreListener(DampLoadMoreListener dampLoadMoreListener) {
-            dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(dampLoadMoreListener);
-            return this;
-        }
-
-        @Override
-        public Builder setAnimationDuration(int duration) {
-            dampRefreshAndLoadMoreLayout.setAnimationDuration(duration);
-            return this;
-        }
-
-        @Override
-        public Builder setPullDownDampDistance(int value) {
-            dampRefreshAndLoadMoreLayout.setPullDownDampDistance(value);
-            return this;
-        }
-
-        @Override
-        public Builder setUpGlideDampDistance(int value) {
-            dampRefreshAndLoadMoreLayout.setUpGlideDampDistance(value);
-            return this;
-        }
-
-        @Override
-        public Builder setPullDownDampValue(float pullDownDampValue) {
-            dampRefreshAndLoadMoreLayout.setPullDownDampValue(pullDownDampValue);
-            return this;
-        }
-
-        @Override
-        public Builder setUpGlideDampValue(float upGlideDampValue) {
-            dampRefreshAndLoadMoreLayout.setUpGlideDampValue(upGlideDampValue);
-            return this;
-        }
-
-        @Override
-        public DampRefreshAndLoadMoreLayout build() {
-            return dampRefreshAndLoadMoreLayout;
-        }
-    }
 
     public DampRefreshAndLoadMoreLayout(Context context) {
         super(context);
@@ -424,6 +346,186 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
         initThis();
     }
 
+    /**
+     * 用于构造DampRefreshAndLoadMoreLayout, 无参数时不会new出新的 {@link DampRefreshAndLoadMoreLayout} 实例，请使用
+     * {@link DampRefreshAndLoadMoreLayout.Builder#attachLayout(DampRefreshAndLoadMoreLayout)}方法传进已经生成的实例。
+     * @return 返回一个Builder用于构造传进的 {@link DampRefreshAndLoadMoreLayout} 实例
+     */
+    public static Builder builder(){
+        return new Builder();
+    }
+
+    /**
+     * 用于构造DampRefreshAndLoadMoreLayout, 传入{@link Context} 会new出新的{@link DampRefreshAndLoadMoreLayout}实例，
+     * 无需使用{@link DampRefreshAndLoadMoreLayout.Builder#attachLayout(DampRefreshAndLoadMoreLayout)}方法传进已经生成的实例。
+     * @param context 这个context用于生成新的DampRefreshAndLoadMoreLayout实例
+     * @return 返回一个Builder用于构造新的DampRefreshAndLoadMoreLayout实例
+     */
+    public static Builder builder(Context context){
+        return new Builder(context);
+    }
+
+    public static class Builder implements DampRefreshAndLoadMoreLayoutBuilderService{
+
+        private DampRefreshAndLoadMoreLayout dampRefreshAndLoadMoreLayout;
+
+        public Builder(Context context) {
+            dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout(context);
+        }
+
+        public Builder(){
+
+        }
+
+        /**
+         * @param dampRefreshAndLoadMoreLayout 需要传入实例,接下来将会为传入的实例进行配置
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder attachLayout(DampRefreshAndLoadMoreLayout dampRefreshAndLoadMoreLayout){
+            this.dampRefreshAndLoadMoreLayout = dampRefreshAndLoadMoreLayout;
+            return this;
+        }
+
+        /**
+         * 调用此方法后，容器将添加默认的刷新头部并带有刷新功能，
+         * 请为容器添加刷新监听{@link DampRefreshAndLoadMoreLayout.Builder#addOnDampRefreshListener(DampRefreshListener)}
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder openRefresh() {
+            dampRefreshAndLoadMoreLayout.openRefresh();
+            return this;
+        }
+
+
+        /**
+         * 调用此方法后，容器将添加传入的刷新头部并带有刷新功能，
+         * 请为容器添加刷新监听{@link DampRefreshAndLoadMoreLayout.Builder#addOnDampRefreshListener(DampRefreshListener)}
+         * @param view 需要传入的自定义刷新头部
+         * @param viewHeight 需要传入的自定义刷新头部的高度（高度的取舍将交由使用者来决定，取舍为是否将刷新头部的高度固定和是否使用{@link View#post(Runnable)}方法获取高度）
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder openRefresh(View view, int viewHeight) {
+            dampRefreshAndLoadMoreLayout.openRefresh(view,viewHeight);
+            return this;
+        }
+
+        /**
+         * 调用此方法后，容器将添加默认的加载底部并带有加载更多功能，
+         * 请为容器添加加载监听{@link DampRefreshAndLoadMoreLayout.Builder#addOnDampLoadMoreListener(DampLoadMoreListener)}
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder openLoadMore() {
+            dampRefreshAndLoadMoreLayout.openLoadMore();
+            return this;
+        }
+
+        /**
+         * 调用此方法后，容器将添加传入的加载底部并带有加载功能，
+         * 请为容器添加加载监听{@link DampRefreshAndLoadMoreLayout.Builder#addOnDampLoadMoreListener(DampLoadMoreListener)}
+         * @param view 需要传入的自定义加载底部
+         * @param viewHeight 需要传入的自定义加载底部的高度（高度的取舍将交由使用者来决定，取舍为是否将加载底部的高度固定和是否使用{@link View#post(Runnable)}方法获取高度）
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder openLoadMore(View view, int viewHeight) {
+            dampRefreshAndLoadMoreLayout.openLoadMore(view,viewHeight);
+            return this;
+        }
+
+        /**
+         * @param dampRefreshListener 添加刷新相关监听 {@link DampRefreshListener}
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder addOnDampRefreshListener(DampRefreshListener dampRefreshListener) {
+            dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(dampRefreshListener);
+            return this;
+        }
+
+        /**
+         * @param dampLoadMoreListener 添加loadmore相关监听 {@link DampLoadMoreListener}
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder addOnDampLoadMoreListener(DampLoadMoreListener dampLoadMoreListener) {
+            dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(dampLoadMoreListener);
+            return this;
+        }
+
+        /**
+         * @param duration 动画播放时长
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder setAnimationDuration(int duration) {
+            dampRefreshAndLoadMoreLayout.setAnimationDuration(duration);
+            return this;
+        }
+
+        /**
+         * @param value 阻尼最大时middleView顶部到容器顶部的距离
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder setPullDownDampDistance(int value) {
+            dampRefreshAndLoadMoreLayout.setPullDownDampDistance(value);
+            return this;
+        }
+
+        /**
+         * @param value 阻尼最大时middleView底部到容器底部的距离
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder setUpGlideDampDistance(int value) {
+            dampRefreshAndLoadMoreLayout.setUpGlideDampDistance(value);
+            return this;
+        }
+
+        /**
+         * @param pullDownDampValue 下拉时最大阻尼系数 可选范围在0f~100f之间
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder setPullDownDampValue(float pullDownDampValue) {
+            dampRefreshAndLoadMoreLayout.setPullDownDampValue(pullDownDampValue);
+            return this;
+        }
+
+        /**
+         * @param upGlideDampValue 上拉最大阻尼系数 可选范围在0f~100f之间
+         * @return {@link DampRefreshAndLoadMoreLayout.Builder}
+         */
+        @Override
+        public Builder setUpGlideDampValue(float upGlideDampValue) {
+            dampRefreshAndLoadMoreLayout.setUpGlideDampValue(upGlideDampValue);
+            return this;
+        }
+
+        /**
+         * @param groupDecoration 需要传入{@link GroupItemDecoration}实例
+         * 如果容器内的View是RecyclerView的话，调用此方法可以为recyclerView添加{@link GroupItemDecoration}
+         */
+        @Override
+        public Builder setGroupDecoration(GroupItemDecoration groupDecoration) {
+            dampRefreshAndLoadMoreLayout.setGroupDecoration(groupDecoration);
+            return this;
+        }
+
+        /**
+         * 调用此方法，返回配置好的{@link DampRefreshAndLoadMoreLayout}
+         * @return {@link DampRefreshAndLoadMoreLayout}
+         */
+        @Override
+        public DampRefreshAndLoadMoreLayout build() {
+            return dampRefreshAndLoadMoreLayout;
+        }
+    }
+
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
@@ -436,7 +538,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
         this.setOrientation(LinearLayout.VERTICAL);
         maxTopDampValue = dp2px(mContext, maxTopDampValue);
         maxBottomDampValue = dp2px(mContext, maxBottomDampValue);
+        initAnimation();
 
+    }
+    private void initAnimation(){
+        loadAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                isAnimationPlay = false;
+                if(isLoadMoreState == LOAD_MORE_OVER){
+                    startDampMiddleAndBottomAnimationOnLoadOver();
+                }
+            }
+        });
     }
 
     /**
@@ -491,8 +606,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                             isDampTopOrBottom = DAMP_TOP;
                             getParent().requestDisallowInterceptTouchEvent(true);
                             return true;
-                        }
-                        if (offsetY >= 0) {
+                        }else  {
                             if (isRefreshState == REFRESH_ING && mChangedTopViewMarginTop > mInitialTopViewMarginTop) {
                                 //刷新时若topview在初始位置下面，则拦截事件
                                 isDampTopOrBottom = DAMP_TOP;
@@ -515,14 +629,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                         if (offsetY > 0) {
                             //判断子view是否滑动到底部并且当前是上滑
                             isDampTopOrBottom = DAMP_BOTTOM;
-                            if (isLoadMoreState == LOAD_MORE_PRE && isLoadMoreState != LOAD_MORE_OVER) {
+                            if (isLoadMoreState == LOAD_MORE_PRE) {
+                                if (mDampLoadMoreListenerInChild != null) {
+                                    mDampLoadMoreListenerInChild.onLoadMore();
+                                }
                                 if (mDampLoadMoreListeners != null) {
                                     for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
-                                        dampLoadMoreListener.onLoading();
+                                        dampLoadMoreListener.onLoadMore();
                                     }
-                                }
-                                if (mDampLoadMoreListenerInChild != null) {
-                                    mDampLoadMoreListenerInChild.onLoading();
                                 }
                             }
                             getParent().requestDisallowInterceptTouchEvent(true);
@@ -636,14 +750,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                     isPullDownState = PULL_DOWN_COMPLETE;
                                     mChangedTopViewMarginTop = mInitialTopViewMarginTop;
                                 }
-                                if (mDampRefreshListenerInChild != null) {
-                                    mDampRefreshListenerInChild.onScrollChanged((int) (offsetY * measureDampTopValue(mChangedTopViewMarginTop) + 0.5f), mChangedTopViewMarginTop);
-                                }
-                                if (mDampRefreshListeners != null) {
-                                    for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                                        dampRefreshListener.onScrollChanged((int) (offsetY * measureDampTopValue(mChangedTopViewMarginTop) + 0.5f), mChangedTopViewMarginTop);
-                                    }
-                                }
+
+                                notifyDampTopViewListenerScrollChanged((int) (offsetY * measureDampTopValue(mChangedTopViewMarginTop) + 0.5f), mChangedTopViewMarginTop);
+
+                                notifyDampLayoutScrollChangedListenerPullDown((int) (offsetY * measureDampTopValue(mChangedTopViewMarginTop) + 0.5f), mChangedTopViewMarginTop);
+
+                                notifyDampRefreshListenerScrollChanged((int) (offsetY * measureDampTopValue(mChangedTopViewMarginTop) + 0.5f), mChangedTopViewMarginTop);
                             }
                         } else {
                             //如果topView为空则只实现回弹效果
@@ -651,15 +763,20 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                 isPullDownState = PULL_DOWN_ING;//复原下拉状态
                             }
                             if (isPullDownState == PULL_DOWN_ING) {
+                                float nowOffsetY;
                                 if (offsetY > 0) {
+                                    nowOffsetY = offsetY;
+                                    nowOffsetY += 0.5f;
                                     setMiddleViewLayoutForPullDown(middleView, middleView.getTop(), middleView.getBottom(), -offsetY);
-                                    mChangedMiddleHeight += offsetY;
+                                    mChangedMiddleHeight += nowOffsetY;
                                 } else {
-                                    float nowOffsetY = offsetY * measureDampMiddleValueForPullDown(mChangedMiddleHeight);
+                                    nowOffsetY = offsetY * measureDampMiddleValueForPullDown(mChangedMiddleHeight);
                                     nowOffsetY += 0.5f;
                                     setMiddleViewLayoutForPullDown(middleView, middleView.getTop(), middleView.getBottom(), -(int) nowOffsetY);
                                     mChangedMiddleHeight += (int) nowOffsetY;
                                 }
+
+                                notifyDampLayoutScrollChangedListenerPullDown((int) nowOffsetY, -mChangedMiddleHeight);
                                 if (mChangedMiddleHeight > 0) {
                                     //如果MidlleView回到原位但是仍在下拉时添加此标记
                                     isPullDownState = PULL_DOWN_COMPLETE;
@@ -691,13 +808,16 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                         mChangedMiddleHeight = 0;
                                     }
 
+                                    if (mDampLoadMoreListenerInChild != null) {
+                                        mDampLoadMoreListenerInChild.onScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
+                                    }
+
+                                    notifyDampLayoutScrollChangedListenerUpGlide((int) nowOffsetY, mChangedMiddleHeight);
+
                                     if (mDampLoadMoreListeners != null) {
                                         for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
                                             dampLoadMoreListener.onScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
                                         }
-                                    }
-                                    if (mDampLoadMoreListenerInChild != null) {
-                                        mDampLoadMoreListenerInChild.onScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
                                     }
                                 }
                             } else {
@@ -724,14 +844,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                         mChangedMiddleHeight = 0;
                                     }
 
-                                    if (mDampLoadMoreListeners != null) {
-                                        for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
-                                            dampLoadMoreListener.onScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
-                                        }
-                                    }
-                                    if (mDampLoadMoreListenerInChild != null) {
-                                        mDampLoadMoreListenerInChild.onScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
-                                    }
+                                    notifyDampBottomViewListenerScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
+
+                                    notifyDampLayoutScrollChangedListenerUpGlide((int) nowOffsetY, mChangedMiddleHeight);
+
+                                    notifyDampLoadMoreListenerScrollChanged((int) nowOffsetY, mChangedMiddleHeight);
                                 }
                             }
                         } else {
@@ -749,6 +866,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                 }
                                 setMiddleViewLayout(middleView, middleView.getTop(), middleView.getBottom(), -(int) nowOffsetY);
                                 mChangedMiddleHeight += (int) nowOffsetY;
+
+                                notifyDampLayoutScrollChangedListenerUpGlide((int) nowOffsetY, mChangedMiddleHeight);
+
                                 if (mChangedMiddleHeight <= 0) {
                                     //如果MidlleView回到原位但是仍在下拉时添加此标记
                                     isUpglide = UPGLIDE_COMPLETE;
@@ -779,11 +899,11 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                 //刷新必需步骤执行后将状态置为正在刷新
                                 isRefreshState = REFRESH_ING;
                                 if (mDampRefreshListenerInChild != null) {
-                                    mDampRefreshListenerInChild.onRefreshing();
+                                    mDampRefreshListenerInChild.onRefresh();
                                 }
                                 if (mDampRefreshListeners != null) {
                                     for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                                        dampRefreshListener.onRefreshing();
+                                        dampRefreshListener.onRefresh();
                                     }
                                 }
                             } else if (isRefreshState == REFRESH_ING && middleView.getTop() >= mTopViewHeight) {
@@ -806,7 +926,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                             } else if (isLoadMoreState == LOAD_MORE_OVER) {
                                 startDampMiddleAndBottomAnimationOnLoadOver();
                                 isUpglide = UPGLIDE_PRE;
-                                mChangedMiddleHeight = 0;
                             }
                         } else {
                             stratDampMiddleForUpGlide();
@@ -844,12 +963,14 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                                 mChangedTopViewMarginTop = 0;
                                 //刷新必需步骤执行后将状态置为正在刷新
                                 isRefreshState = REFRESH_ING;
+
                                 if (mDampRefreshListenerInChild != null) {
-                                    mDampRefreshListenerInChild.onRefreshing();
+                                    mDampRefreshListenerInChild.onRefresh();
                                 }
+
                                 if (mDampRefreshListeners != null) {
                                     for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                                        dampRefreshListener.onRefreshing();
+                                        dampRefreshListener.onRefresh();
                                     }
                                 }
                             } else if (isRefreshState == REFRESH_ING && middleView.getTop() >= mTopViewHeight) {
@@ -872,7 +993,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                             } else if (isLoadMoreState == LOAD_MORE_OVER) {
                                 startDampMiddleAndBottomAnimationOnLoadOver();
                                 isUpglide = UPGLIDE_PRE;
-                                mChangedMiddleHeight = 0;
                             }
                         } else {
                             stratDampMiddleForUpGlide();
@@ -965,66 +1085,64 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
         }
     }
 
+    private ValueAnimator toHomeAnimation = new ValueAnimator();
     /**
      * 顶部完全回弹时的动画
      */
     private void startDampTopToHomeAnimation() {
         preAnimationValue = mChangedTopViewMarginTop;
-        final ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop, mInitialTopViewMarginTop);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        toHomeAnimation.setIntValues(mChangedTopViewMarginTop, mInitialTopViewMarginTop);
+        toHomeAnimation.setDuration(animationDuration);
+        toHomeAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setTopMarigin(topView, topViewMarginParams, (int) animation.getAnimatedValue(), mInitialTopViewMarginTop);
                 preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
-                if (mDampRefreshListenerInChild != null) {
-                    mDampRefreshListenerInChild.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
 
-                }
-                if (mDampRefreshListeners != null) {
-                    for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                        dampRefreshListener.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
-                    }
-                }
+                notifyDampTopViewListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
+                notifyDampLayoutScrollChangedListenerPullDown(preAnimationValue, (int) animation.getAnimatedValue());
+
+                notifyDampRefreshListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
                 preAnimationValue = (int) animation.getAnimatedValue();
                 if (mInitialTopViewMarginTop == (int) animation.getAnimatedValue()) {
                     isAnimationPlay = false;
                 }
             }
         });
-        animator.start();
+        toHomeAnimation.start();
         isAnimationPlay = true;
     }
 
+    private ValueAnimator toRefreshAnimation = new ValueAnimator();
     /**
      * 回弹到刷新位置的动画PRE
      */
     private void startDampTopToRefreshAnimation() {
         preAnimationValue = mChangedTopViewMarginTop;
-        ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop, 0);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        toRefreshAnimation.setIntValues(mChangedTopViewMarginTop, 0);
+        toRefreshAnimation.setDuration(animationDuration);
+        toRefreshAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
 
                 setTopMarigin(topView, topViewMarginParams, (int) animation.getAnimatedValue(), mInitialTopViewMarginTop);
                 preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
-                if (mDampRefreshListenerInChild != null) {
-                    mDampRefreshListenerInChild.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
 
-                }
-                if (mDampRefreshListeners != null) {
-                    for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                        dampRefreshListener.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
-                    }
-                }
+                notifyDampTopViewListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
+                notifyDampLayoutScrollChangedListenerPullDown(preAnimationValue, (int) animation.getAnimatedValue());
+
+                notifyDampRefreshListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
                 preAnimationValue = (int) animation.getAnimatedValue();
                 if ((int) animation.getAnimatedValue() == 0) {
                     isAnimationPlay = false;
                 }
             }
         });
-        animator.start();
+        toRefreshAnimation.start();
         isAnimationPlay = true;
     }
 
@@ -1040,7 +1158,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      * 计算顶部下拉时的实时阻尼值
      */
     private float measureDampTopValue(float marginValue) {
-        float dampTopValue = 100;
+        float dampTopValue;
         if (marginValue < 0f) {
             marginValue = 0f;
         }
@@ -1068,7 +1186,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
 
         preAnimationValue = 0;
 
-        loadAnimator = ValueAnimator.ofInt(0, mChangedMiddleHeight - mInitialBottomViewHeight);
+        loadAnimator.setIntValues(0, mChangedMiddleHeight - mInitialBottomViewHeight);
         loadAnimator.setDuration(animationDuration);
         loadAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -1076,15 +1194,15 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                 middleView.layout(middleView.getLeft(), topMiddle + (int) animation.getAnimatedValue(), middleView.getRight(), bottomMiddle + (int) animation.getAnimatedValue());
                 bottomView.layout(bottomView.getLeft(), topBottom + (int) animation.getAnimatedValue(), bottomView.getRight(), bottomBottom + (int) animation.getAnimatedValue());
                 preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
-                if (mDampLoadMoreListenerInChild != null) {
-                    mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
 
-                }
-                if (mDampLoadMoreListeners != null) {
-                    for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
-                        dampLoadMoreListener.onScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
-                    }
-                }
+                mChangedScrollByAnimation = lastValue - (int) animation.getAnimatedValue();
+
+                notifyDampBottomViewListenerScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+
+                notifyDampLayoutScrollChangedListenerUpGlide(preAnimationValue, getBottom() - middleView.getBottom());
+
+                notifyDampLoadMoreListenerScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+
                 preAnimationValue = (int) animation.getAnimatedValue();
                 if ((int) animation.getAnimatedValue() == lastValue) {
                     isAnimationPlay = false;
@@ -1106,36 +1224,49 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
         final int lastValue = mChangedMiddleHeight;
 
         preAnimationValue = 0;
-        final ValueAnimator animator = ValueAnimator.ofInt(0, mChangedMiddleHeight);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                setMiddleViewLayout(middleView, topMiddle, bottomMiddle, (int) animation.getAnimatedValue());
-                setBottomViewLayout(bottomView, topBottom, bottomBottom, (int) animation.getAnimatedValue(), mInitialBottomViewHeight);
+        if(mChangedMiddleHeight != 0){
+            //用于判断是否预先知道数据已经加载完毕，并提前调用 loadOver() 方法
+            loadOverAnimator.setIntValues(0, mChangedMiddleHeight);
+            loadOverAnimator.setDuration(animationDuration);
+            loadOverAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
 
-                preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
-                if (mDampLoadMoreListenerInChild != null) {
-                    mDampLoadMoreListenerInChild.onScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+                    setMiddleViewLayout(middleView, topMiddle, bottomMiddle, (int) animation.getAnimatedValue());
+                    setBottomViewLayout(bottomView, topBottom, bottomBottom, (int) animation.getAnimatedValue(), mInitialBottomViewHeight);
 
-                }
-                if (mDampLoadMoreListeners != null) {
-                    for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
-                        dampLoadMoreListener.onScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+                    preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
+
+                    notifyDampBottomViewListenerScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+
+                    notifyDampLayoutScrollChangedListenerUpGlide(preAnimationValue, getBottom() - middleView.getBottom());
+
+                    notifyDampLoadMoreListenerScrollChanged(preAnimationValue, getBottom() - middleView.getBottom());
+
+                    preAnimationValue = (int) animation.getAnimatedValue();
+
+                    if ((int) animation.getAnimatedValue() == lastValue) {
+                        isAnimationPlay = false;
+                        if (mDampLoadMoreListenerInChild != null) {
+                            mDampLoadMoreListenerInChild.onLoaded();
+                        }
                     }
                 }
-                preAnimationValue = (int) animation.getAnimatedValue();
+            });
+            loadOverAnimator.start();
+            isAnimationPlay = true;
+        }else {
+            notifyDampBottomViewListenerScrollChanged(mChangedMiddleHeight, 0);
 
-                if ((int) animation.getAnimatedValue() == lastValue) {
-                    isAnimationPlay = false;
-                    if (mDampLoadMoreListenerInChild != null) {
-                        mDampLoadMoreListenerInChild.onLoaded();
-                    }
-                }
+            notifyDampLayoutScrollChangedListenerUpGlide(mChangedMiddleHeight, 0);
+
+            notifyDampLoadMoreListenerScrollChanged(mChangedMiddleHeight, 0);
+
+            if (mDampLoadMoreListenerInChild != null) {
+                mDampLoadMoreListenerInChild.onLoaded();
             }
-        });
-        animator.start();
-        isAnimationPlay = true;
+        }
+        mChangedMiddleHeight = 0;
     }
 
     /**
@@ -1145,18 +1276,21 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
         final int topMiddle = middleView.getTop();
         final int bottomMiddle = middleView.getBottom();
         final int lastValue = mChangedMiddleHeight;
-        final ValueAnimator animator = ValueAnimator.ofInt(0, mChangedMiddleHeight);
-        animator.setDuration(animationDuration);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        defaultBottomSpringbackAnimator.setIntValues(0, mChangedMiddleHeight);
+        defaultBottomSpringbackAnimator.setDuration(animationDuration);
+        defaultBottomSpringbackAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayout(middleView, topMiddle, bottomMiddle, (int) animation.getAnimatedValue());
+                preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
+                notifyDampLayoutScrollChangedListenerUpGlide(preAnimationValue, getBottom() - middleView.getBottom());
+                preAnimationValue = (int) animation.getAnimatedValue();
                 if ((int) animation.getAnimatedValue() == lastValue) {
                     isAnimationPlay = false;
                 }
             }
         });
-        animator.start();
+        defaultBottomSpringbackAnimator.start();
         isAnimationPlay = true;
     }
 
@@ -1174,6 +1308,9 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 setMiddleViewLayoutForPullDown(middleView, topMiddle, bottomMiddle, (int) animation.getAnimatedValue());
+                preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
+                notifyDampLayoutScrollChangedListenerPullDown(preAnimationValue, middleView.getTop());
+                preAnimationValue = (int) animation.getAnimatedValue();
                 if ((int) animation.getAnimatedValue() == lastValue) {
                     isAnimationPlay = false;
                 }
@@ -1245,7 +1382,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      *                     bottomView设置布局位置的方法
      */
     private void setBottomViewLayout(View targetView, int top, int bottom, int changedValue, int initialValue) {
-        if (((getBottom() - getTop()) - (targetView.getBottom() + changedValue)) >= (-initialValue)) {
+        if (getBottom() - top - changedValue > 0) {
             targetView.layout(targetView.getLeft(), top + changedValue, targetView.getRight(), bottom + changedValue);
         } else {
             targetView.layout(targetView.getLeft(), getBottom() - getTop(), targetView.getRight(), getBottom() - getTop() + initialValue);
@@ -1267,7 +1404,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      * 设置默认topView
      */
     @Override
-    public void setTopView() {
+    public void openRefresh() {
         if (topView == null) {
             topView = new DampTopViewChild(mContext);
             try {
@@ -1288,12 +1425,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      * 添加自定义topView
      */
     @Override
-    public void setTopView(View view, int topViewHeight) {
+    public void openRefresh(View view, int viewHeight) {
         if (topView == null) {
             topView = view;
             try {
                 mDampRefreshListenerInChild = (DampTopViewListener) topView;
-                mTopViewHeight = topViewHeight;
+                mTopViewHeight = viewHeight;
                 this.addView(topView, 0, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp2px(mContext, mTopViewHeight)));
                 //初始化topView相关
                 topViewMarginParams = (MarginLayoutParams) topView.getLayoutParams();
@@ -1311,7 +1448,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      * 设置默认bottomView
      */
     @Override
-    public void setBottomView() {
+    public void openLoadMore() {
         if (bottomView == null) {
             bottomView = new DampBottomViewChild(mContext);
             try {
@@ -1332,12 +1469,12 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      * 设置自定义bottomView
      */
     @Override
-    public void setBottomView(View view, int bottomViewHeight) {
+    public void openLoadMore(View view, int viewHeight) {
         if (bottomView == null) {
             this.bottomView = view;
             try {
                 mDampLoadMoreListenerInChild = (DampBottomViewListener) bottomView;
-                    mBottomViewHeight = bottomViewHeight;
+                    mBottomViewHeight = viewHeight;
                 if (topView == null) {
                     this.addView(bottomView, 1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp2px(mContext, mBottomViewHeight)));
                 } else {
@@ -1355,7 +1492,10 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      */
     @Override
     public void addOnDampRefreshListener(DampRefreshListener dampRefreshListener) {
-        if (dampRefreshListener != null && mDampRefreshListeners != null) {
+        if(mDampRefreshListeners == null){
+            mDampRefreshListeners = new ArrayList<>();
+        }
+        if (dampRefreshListener != null) {
             mDampRefreshListeners.add(dampRefreshListener);
         }
     }
@@ -1365,10 +1505,15 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
      */
     @Override
     public void addOnDampLoadMoreListener(DampLoadMoreListener dampLoadMoreListener) {
-        if (dampLoadMoreListener != null && mDampLoadMoreListeners != null) {
+        if(mDampLoadMoreListeners == null){
+            mDampLoadMoreListeners = new ArrayList<>();
+        }
+        if (dampLoadMoreListener != null) {
             mDampLoadMoreListeners.add(dampLoadMoreListener);
         }
     }
+
+    private ValueAnimator refreshStopAnimation = new ValueAnimator();
 
     /**
      * 停止刷新
@@ -1376,23 +1521,21 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     public void stopRefreshAnimation() {
         if (isRefreshState == REFRESH_ING && topView != null) {
             preAnimationValue = mChangedTopViewMarginTop;
-            ValueAnimator animator = ValueAnimator.ofInt(mChangedTopViewMarginTop, mInitialTopViewMarginTop);
-            animator.setDuration(animationDuration);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            refreshStopAnimation.setIntValues(mChangedTopViewMarginTop, mInitialTopViewMarginTop);
+            refreshStopAnimation.setDuration(animationDuration);
+            refreshStopAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     setTopMarigin(topView, topViewMarginParams, (int) animation.getAnimatedValue(), mInitialTopViewMarginTop);
 
                     preAnimationValue = preAnimationValue - (int) animation.getAnimatedValue();
-                    if (mDampRefreshListenerInChild != null) {
-                        mDampRefreshListenerInChild.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
 
-                    }
-                    if (mDampRefreshListeners != null) {
-                        for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
-                            dampRefreshListener.onScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
-                        }
-                    }
+                    notifyDampTopViewListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
+                    notifyDampLayoutScrollChangedListenerPullDown(preAnimationValue, (int) animation.getAnimatedValue());
+
+                    notifyDampRefreshListenerScrollChanged(preAnimationValue, (int) animation.getAnimatedValue());
+
                     preAnimationValue = (int) animation.getAnimatedValue();
 
                     if ((int) animation.getAnimatedValue() == mInitialTopViewMarginTop) {
@@ -1403,7 +1546,7 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
                     }
                 }
             });
-            animator.start();
+            refreshStopAnimation.start();
             if (mDampRefreshListenerInChild != null) {
                 mDampRefreshListenerInChild.onComplete();
             }
@@ -1418,77 +1561,101 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     /**
      * 加载结束
      */
+
+    private int mChangedScrollByAnimation = 0;
+
     public void stopLoadMoreAnimation() {
-        if (isAnimationPlay) {
-            if (loadAnimator != null) {
-                loadAnimator.cancel();
+        if(bottomView != null){
+            if (isAnimationPlay) {
+                if (loadAnimator != null) {
+                    loadAnimator.cancel();
+                }
                 isAnimationPlay = false;
+                stopLoadMoreAnimation();
+            } else if (isUpglide == UPGLIDE_ING || isDampTopOrBottom == DAMP_BOTTOM) {
+                resetState();
+                stopLoadMoreAnimation();
+                isShouldScrollMiddleView = true;
+            } else {
+                notifyDampBottomViewListenerScrollChanged(mChangedMiddleHeight,0);
+                notifyDampLayoutScrollChangedListenerUpGlide(mChangedMiddleHeight,0);
+                notifyDampLoadMoreListenerScrollChanged(mChangedMiddleHeight,0);
+
+
+                middleView.layout(middleView.getLeft(), getTop(), middleView.getRight(),getBottom());
+                bottomView.layout(bottomView.getLeft(), getBottom(), bottomView.getRight(), getBottom() + mInitialBottomViewHeight);
+
+                isUpglide = UPGLIDE_PRE;
+                isLoadMoreState = LOAD_MORE_PRE;
+
+                if (mDampLoadMoreListenerInChild != null) {
+                    mDampLoadMoreListenerInChild.onComplete();
+                }
+
+                middleView.scrollBy(0, mChangedMiddleHeight + mChangedScrollByAnimation);
+
+                mChangedScrollByAnimation = 0;
+
+                mChangedMiddleHeight = 0;
             }
-            stopLoadMoreAnimation();
-        } else if (isUpglide == UPGLIDE_ING || isDampTopOrBottom == DAMP_BOTTOM) {
-            resetState();
-            stopLoadMoreAnimation();
-            isShouldScrollMiddleView = true;
-        } else {
-//            final int topMiddle = middleView.getTop();
-//            final int bottomMiddle = middleView.getBottom();
-//            final int topBottom = bottomView.getTop();
-//            final int bottomBottom = bottomView.getBottom();
-//            final int lastValue = mChangedMiddleHeight;
-//            preAnimationValue = 0;
-//            final ValueAnimator animator = ValueAnimator.ofInt(0,mChangedMiddleHeight);
-//            animator.setDuration(animationDuration);
-//            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//                @Override
-//                public void onAnimationUpdate(ValueAnimator animation) {
-//                    setMiddleViewLayout(middleView,topMiddle,bottomMiddle,(int)animation.getAnimatedValue());
-//                    setBottomViewLayout(bottomView,topBottom,bottomBottom,(int)animation.getAnimatedValue(),mInitialBottomViewHeight);
-//
-//                    preAnimationValue = preAnimationValue - (int)animation.getAnimatedValue();
-//                    if(mDampLoadMoreListenerInChild!=null){
-//                        mDampLoadMoreListenerInChild.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
-//
-//                    }
-//                    if(mDampLoadMoreListeners!=null){
-//                        for(DampLoadMoreListener dampLoadMoreListener:mDampLoadMoreListeners){
-//                            dampLoadMoreListener.getScrollChanged(preAnimationValue,getBottom()-middleView.getBottom());
-//                        }
-//                    }
-//                    preAnimationValue = (int)animation.getAnimatedValue();
-//
-//                    if((int)animation.getAnimatedValue() == lastValue){
-//                        if(mDampLoadMoreListenerInChild!=null){
-//                            mDampLoadMoreListenerInChild.stopLoadMore();
-//                        }
-//                        mAapter.notifyDataSetChanged();
-//                        isAnimationPlay = false;
-//                    }
-//                }
-//            });
-//            animator.start();
-//            isAnimationPlay = true;
-            middleView.layout(middleView.getLeft(), getTop(), middleView.getRight(),getBottom());
-            bottomView.layout(bottomView.getLeft(), getBottom(), bottomView.getRight(), getBottom() + mInitialBottomViewHeight);
-
-            isUpglide = UPGLIDE_PRE;
-            isLoadMoreState = LOAD_MORE_PRE;
-
-            if (mDampLoadMoreListenerInChild != null) {
-                mDampLoadMoreListenerInChild.onComplete();
-            }
-            middleView.scrollBy(0, mChangedMiddleHeight);
-
-            mChangedMiddleHeight = 0;
         }
     }
 
+    private void notifyDampTopViewListenerScrollChanged(int dy, int topViewPosition){
+        if (mDampRefreshListenerInChild != null) {
+            mDampRefreshListenerInChild.onScrollChanged(dy, topViewPosition);
+        }
+    }
+
+    private void notifyDampBottomViewListenerScrollChanged(int dy, int bottomViewPosition){
+        if (mDampLoadMoreListenerInChild != null) {
+            mDampLoadMoreListenerInChild.onScrollChanged(dy, bottomViewPosition);
+        }
+    }
+
+    private void notifyDampLayoutScrollChangedListenerPullDown(int dy, int topViewPosition){
+        if (mDampLayoutScrollChangedListeners != null) {
+            for (DampLayoutScrollChangedListener dampLayoutScrollChangedListener : mDampLayoutScrollChangedListeners) {
+                dampLayoutScrollChangedListener.onPullDownScrollChanged(dy, topViewPosition);
+            }
+        }
+    }
+
+    private void notifyDampLayoutScrollChangedListenerUpGlide(int dy, int bottomViewPosition){
+        if (mDampLayoutScrollChangedListeners != null) {
+            for (DampLayoutScrollChangedListener dampLayoutScrollChangedListener : mDampLayoutScrollChangedListeners) {
+                dampLayoutScrollChangedListener.onUpGlideScrollChanged(dy, bottomViewPosition);
+            }
+        }
+    }
+
+    private void notifyDampRefreshListenerScrollChanged(int dy, int topViewPosition){
+        if (mDampRefreshListeners != null) {
+            for (DampRefreshListener dampRefreshListener : mDampRefreshListeners) {
+                dampRefreshListener.onScrollChanged(dy, topViewPosition);
+            }
+        }
+    }
+
+    private void notifyDampLoadMoreListenerScrollChanged(int dy, int bottomViewPosition){
+        if (mDampLoadMoreListeners != null) {
+            for (DampLoadMoreListener dampLoadMoreListener : mDampLoadMoreListeners) {
+                dampLoadMoreListener.onScrollChanged(dy, bottomViewPosition);
+            }
+        }
+    }
+
+    /**
+     * 1.loadMore动画播放时使用
+     * 2.容器还被拖动时使用
+     * 3.loadMore动画结束时使用
+     */
     public void loadOver() {
-        if (isUpglide == UPGLIDE_ING) {
-            resetState();
-            loadOver();
-        } else {
+        resetState();
+        if(loadAnimator.isRunning()) {
+            isLoadMoreState = LOAD_MORE_OVER;
+        }else{
             startDampMiddleAndBottomAnimationOnLoadOver();
-            mChangedMiddleHeight = 0;
             isLoadMoreState = LOAD_MORE_OVER;
         }
     }
@@ -1507,7 +1674,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     @Override
     public void setPullDownDampDistance(int value) {
         this.maxTopDampValue = (float) dp2px(mContext, value);
-        isModidyMaxTopValue = true;
     }
 
     /**
@@ -1516,7 +1682,6 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
     @Override
     public void setUpGlideDampDistance(int value) {
         this.maxBottomDampValue = (float) dp2px(mContext, value);
-        isModidyMaxBottomValue = true;
     }
 
     /**
@@ -1546,6 +1711,42 @@ public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRe
             this.mUpGlideDampValue = 0f;
         } else {
             this.mUpGlideDampValue = upGlideDampValue;
+        }
+    }
+
+    /**
+     * @param groupDecoration 需要传入{@link GroupItemDecoration}实例
+     * 使用此方法的前提是容器内的child是RecyclerView
+     */
+    @Override
+    public void setGroupDecoration(GroupItemDecoration groupDecoration){
+        try {
+            RecyclerView rvView = (RecyclerView)middleView;
+            groupDecoration.setParent(rvView);
+            rvView.addItemDecoration(groupDecoration);
+            addDampLayoutScrollChangedListener(groupDecoration);
+        }catch (ClassCastException e){
+            Log.e(TAG, "setGroupDecoration: ", e);
+        }
+    }
+
+    private void addDampLayoutScrollChangedListener(DampLayoutScrollChangedListener dampLayoutScrollChangedListener){
+        if(mDampLayoutScrollChangedListeners == null){
+            mDampLayoutScrollChangedListeners = new ArrayList<>();
+        }
+        if(dampLayoutScrollChangedListener != null){
+            mDampLayoutScrollChangedListeners.add(dampLayoutScrollChangedListener);
+        }
+    }
+
+    /**
+     * @param type 用于判断是否可以继续加载
+     */
+    public void continueLoad(boolean type){
+        if(type){
+            isLoadMoreState = LOAD_MORE_PRE;
+        }else {
+            loadOver();
         }
     }
 }

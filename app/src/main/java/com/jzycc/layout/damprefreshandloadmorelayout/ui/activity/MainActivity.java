@@ -5,7 +5,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout;
 import com.jzycc.layout.damprefreshandloadmorelayout.R;
 import com.jzycc.layout.damprefreshandloadmorelayout.ui.adapter.MainAdapter;
 
@@ -13,9 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private DampRefreshAndLoadMoreLayout dvContent;
     private RecyclerView rvContent;
-    private MainAdapter mAdapter;
     private List<String> mList = new ArrayList<>();
 
     @Override
@@ -26,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         initData();
 
         rvContent.setLayoutManager(new GridLayoutManager(this,3));
-        mAdapter = new MainAdapter(mList,this);
+        MainAdapter mAdapter = new MainAdapter(mList);
         rvContent.setAdapter(mAdapter);
         mAdapter.setOnClickItemListener(new MainAdapter.OnClickItemListener() {
             @Override
@@ -40,8 +37,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView(){
-        dvContent = (DampRefreshAndLoadMoreLayout)findViewById(R.id.dv_content);
-        rvContent = (RecyclerView)findViewById(R.id.rv_content);
+        rvContent = findViewById(R.id.rv_content);
     }
 
     private void initData(){
@@ -50,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
         mList.add("默认加载");
         mList.add("默认刷新与加载");
         mList.add("自定义刷新与加载");
-        mList.add("SwipRefresh");
+        mList.add("SwipeRefresh");
     }
 }
-

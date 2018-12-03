@@ -46,11 +46,6 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     private static final int REFRESH_READY = 1;
 
     /**
-     * 下拉长度不足，松手回弹到原位
-     */
-    private static final int REFRESH_CANNOT = 2;
-
-    /**
      * 刷新中
      */
     private static final int REFRESH_ING = 3;
@@ -77,9 +72,9 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     private void initThis() {
         View inflate = inflate(getContext(), R.layout.damp_top_view, this);
 
-        tvRefreshState = (TextView) inflate.findViewById(R.id.tv_refresh_state);
+        tvRefreshState = inflate.findViewById(R.id.tv_refresh_state);
 
-        ivRefreshState = (ImageView) inflate.findViewById(R.id.iv_refresh_state);
+        ivRefreshState = inflate.findViewById(R.id.iv_refresh_state);
 
         mTopViewHeight = (float) dp2px(mContext, DAMPTOPVIEW_HEIGHT);
 
@@ -117,7 +112,7 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     }
 
     @Override
-    public void onRefreshing() {
+    public void onRefresh() {
         isRefreshState = REFRESH_ING;
         tvRefreshState.setText(R.string.damplayout_refreshing);
         ivRefreshState.setImageResource(R.drawable.refresh_ing);
@@ -146,14 +141,10 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     }
 
     private float measureImageRotation(float topViewPosition) {
-        float rotation = -(topViewPosition) / (mTopViewHeight) * 180;
-        return rotation;
+        return -(topViewPosition) / (mTopViewHeight) * 180;
     }
 
     /**
-     * @param context
-     * @param dpValue
-     * @return px
      * 将dp转化为px
      */
     private int dp2px(Context context, float dpValue) {
@@ -178,11 +169,9 @@ public class DampTopViewChild extends FrameLayout implements DampTopViewListener
     }
 
     public static class Builder{
-        private Context mContext;
         private DampTopViewChild viewChild;
 
         public Builder(Context mContext) {
-            this.mContext = mContext;
             viewChild = new DampTopViewChild(mContext);
         }
 

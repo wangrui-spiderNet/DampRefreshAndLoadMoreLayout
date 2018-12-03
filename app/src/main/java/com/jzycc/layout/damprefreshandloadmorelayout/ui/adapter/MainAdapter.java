@@ -1,6 +1,5 @@
 package com.jzycc.layout.damprefreshandloadmorelayout.ui.adapter;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -20,8 +19,7 @@ import java.util.List;
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
 
     private List<String> mList;
-    private Context context;
-    public static interface OnClickItemListener{
+    public interface OnClickItemListener{
         void click(int position);
     }
 
@@ -31,9 +29,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         this.onClickItemListener = onClickItemListener;
     }
 
-    public MainAdapter(List<String> mList, Context context) {
+    public MainAdapter(List<String> mList) {
         this.mList = mList;
-        this.context = context;
     }
 
     @NonNull
@@ -45,12 +42,12 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         holder.tvItem.setText(mList.get(position));
         holder.cvItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickItemListener.click(position);
+                onClickItemListener.click(holder.getAdapterPosition());
             }
         });
     }
@@ -65,8 +62,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         private TextView tvItem;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            cvItem = (CardView) itemView.findViewById(R.id.cv_item);
-            tvItem = (TextView) itemView.findViewById(R.id.tv_title);
+            cvItem = itemView.findViewById(R.id.cv_item);
+            tvItem =  itemView.findViewById(R.id.tv_title);
         }
     }
 }

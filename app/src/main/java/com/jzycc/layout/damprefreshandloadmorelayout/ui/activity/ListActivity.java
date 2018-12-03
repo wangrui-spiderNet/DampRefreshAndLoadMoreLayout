@@ -7,13 +7,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.jzycc.layout.damplayoutlibrary.bottomview.DampBottomViewChild;
 import com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout;
+import com.jzycc.layout.damplayoutlibrary.layout.decoration.GroupItemDecoration;
 import com.jzycc.layout.damplayoutlibrary.topview.DampTopViewChild;
 import com.jzycc.layout.damplayoutlibrary.topview.swipetopview.SwipeTopView;
+import com.jzycc.layout.damprefreshandloadmorelayout.Content;
 import com.jzycc.layout.damprefreshandloadmorelayout.R;
-import com.jzycc.layout.damprefreshandloadmorelayout.model.Content;
 import com.jzycc.layout.damprefreshandloadmorelayout.model.ZhiHuDto;
 import com.jzycc.layout.damprefreshandloadmorelayout.ui.adapter.ListAdapter;
 
@@ -21,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * author JzyCc
+ * author Jzy(Xiaohuntun)
  * date 18-9-17
  */
 public class ListActivity extends AppCompatActivity {
@@ -31,9 +36,10 @@ public class ListActivity extends AppCompatActivity {
     private List<ZhiHuDto> mPageList = new ArrayList<>();
     private ListAdapter mAdapter;
     private int count = 0;
-    private int pageSize = 5;
+    private static final int pageSize = 5;
     private boolean loadOver = false;
     private Integer type = 0;
+    private int length;
 
     public static void actionStart(Context context, Integer type) {
         Intent intent = new Intent(context, ListActivity.class);
@@ -53,12 +59,10 @@ public class ListActivity extends AppCompatActivity {
         initView();
         getIntentData();
         LinearLayoutManager layoutmanager = new LinearLayoutManager(this);
+        setActivityType(type);
         rvContent.setLayoutManager(layoutmanager);
         mAdapter = new ListAdapter(this, mPageList);
         rvContent.setAdapter(mAdapter);
-
-        setActivityType(type);
-
         loadZhiHuVo();
 
 
@@ -70,7 +74,7 @@ public class ListActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onRefreshing() {
+                public void onRefresh() {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -92,7 +96,6 @@ public class ListActivity extends AppCompatActivity {
         }
 
         if (type == 2 || type == 3 || type == 4) {
-            //dvContent.setAnimationDuration(20);
             dvContent.addOnDampLoadMoreListener(new DampRefreshAndLoadMoreLayout.DampLoadMoreListener() {
                 @Override
                 public void onScrollChanged(int i, int i1) {
@@ -100,7 +103,7 @@ public class ListActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onLoading() {
+                public void onLoadMore() {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -111,9 +114,7 @@ public class ListActivity extends AppCompatActivity {
                                     public void run() {
                                         loadZhiHuVo();
                                         if (!loadOver) {
-                                            if (!loadOver)
-                                                dvContent.stopLoadMoreAnimation();
-                                            //mAda  pter.notifyDataSetChanged();
+                                            dvContent.stopLoadMoreAnimation();
                                         } else {
                                             dvContent.loadOver();
                                         }
@@ -127,7 +128,6 @@ public class ListActivity extends AppCompatActivity {
                 }
             });
         }
-
     }
 
     private void setActivityType(Integer type) {
@@ -135,21 +135,23 @@ public class ListActivity extends AppCompatActivity {
             case 0:
                 break;
             case 1:
-                dvContent.setTopView();
+                dvContent.openRefresh();
                 break;
             case 2:
-                dvContent.setBottomView();
+                dvContent.openLoadMore();
                 break;
             case 3:
-                dvContent.setTopView();
-                dvContent.setBottomView();
+                dvContent.openRefresh();
+                dvContent.openLoadMore();
                 break;
             case 4:
-                dvContent.setTopView(new DampTopViewChild.Builder(this)
+                GroupItemDecoration groupItemDecoration = setDecoration();
+                dvContent.setGroupDecoration(groupItemDecoration);
+                dvContent.openRefresh(new DampTopViewChild.Builder(this)
                         .setImageColorResource(R.color.colorAccent)
                         .setTextColorResource(R.color.colorAccent)
                         .build(), DampTopViewChild.DAMPTOPVIEW_HEIGHT);
-                dvContent.setBottomView(new DampBottomViewChild.Builder(this)
+                dvContent.openLoadMore(new DampBottomViewChild.Builder(this)
                         .setImageColorResource(R.color.colorAccent)
                         .setTextColorResource(R.color.colorAccent)
                         .setLoadOverText("再拉裤子要掉了")
@@ -157,15 +159,15 @@ public class ListActivity extends AppCompatActivity {
                 break;
             case 5:
                 SwipeTopView swipeTopView = new SwipeTopView(this);
-                dvContent.setTopView(swipeTopView, SwipeTopView.SWIPETOPVIEW_HEIGHT);
+                dvContent.openRefresh(swipeTopView, SwipeTopView.SWIPETOPVIEW_HEIGHT);
                 break;
         }
 
     }
 
     private void initView() {
-        dvContent = (DampRefreshAndLoadMoreLayout) findViewById(R.id.dv_content);
-        rvContent = (RecyclerView) findViewById(R.id.rv_content);
+        dvContent = findViewById(R.id.dv_content);
+        rvContent = findViewById(R.id.rv_content);
     }
 
 
@@ -181,6 +183,9 @@ public class ListActivity extends AppCompatActivity {
         loadOver = false;
         count = 0;
         mPageList.clear();
+        if (mGroupItemDecoration != null) {
+            mGroupItemDecoration.removeAllGroup();
+        }
         loadZhiHuVo();
         dvContent.stopRefreshAnimation();
         mAdapter.notifyDataSetChanged();
@@ -188,9 +193,12 @@ public class ListActivity extends AppCompatActivity {
 
     private void loadZhiHuVo() {
         if (count + 1 <= mList.size() / pageSize) {
-            int length = mPageList.size();
+            length = mPageList.size();
             for (int i = count * pageSize; i < count * pageSize + pageSize; i++) {
                 mPageList.add(mList.get(i));
+                if (mGroupItemDecoration != null && i % 5 == 0) {
+                    mGroupItemDecoration.addGroup(i%2, mPageList.size() - 1);
+                }
             }
             if (mAdapter != null) {
                 mAdapter.notifyItemRangeInserted(length, pageSize);
@@ -199,5 +207,31 @@ public class ListActivity extends AppCompatActivity {
         } else {
             loadOver = true;
         }
+    }
+
+    GroupItemDecoration mGroupItemDecoration;
+    int num = 1;
+
+    private GroupItemDecoration setDecoration() {
+
+        mGroupItemDecoration = new GroupItemDecoration(this, new GroupItemDecoration.GroupDecorationCallBack() {
+            @Override
+            public View onCreatGroupView(ViewGroup parent, int type) {
+                if (type == 0) {
+                    return LayoutInflater.from(ListActivity.this).inflate(R.layout.decoration_default_style, parent, false);
+                } else {
+                    return LayoutInflater.from(ListActivity.this).inflate(R.layout.decoration_second_style, parent, false);
+                }
+
+            }
+
+            @Override
+            public void onBindGroupView(View groupView, int itemPosition, int groupIndex, int viewType) {
+                TextView textView = groupView.findViewById(R.id.tv_text);
+                textView.setText("group " + (groupIndex + 1));
+            }
+        });
+
+        return mGroupItemDecoration;
     }
 }
