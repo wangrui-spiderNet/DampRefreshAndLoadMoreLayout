@@ -1,23 +1,22 @@
 # DampRefreshAndLoadMoreLayout使用手册
-![](https://img.shields.io/badge/Version-v1.1.9-brightgreen.svg)
+![](https://img.shields.io/badge/Version-v1.2.0-brightgreen.svg)
 ## DampRefreshAndLoadMoreLayout介绍
-1. recyclerview在它里面可以更灵活的转交事件。
-2. 默认实现仿iOS拖动带阻尼回弹的效果。
+1. 列表在它里面可以更灵活的转交事件。
+2. 默认实现仿IOS拖动带阻尼回弹的效果。
 3. 可以实现刷新和加载更多的功能。
 4. 将头部和底部与容器分离，提供接口返回相关参数，可以根据返回参数完全自定义自己想要的刷新头部和加载底部。
+5. 可以为列表分组，实现黏性头部效果 [GroupItemDecoration](https://github.com/JzyCc/DampRefreshAndLoadMoreLayout/blob/master/GroupItemDecoration.md)
 
 ### 实现效果
 ```
 以下是是默认的刷新加载动画，DampRefreshAndLoadMoreLayout最重要的功能是提供刷新和加载的一个平台，
 可以根据自己需求自定义刷新和加载！
 ```
-![](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_1.gif)   ![](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)
-
+![刷新与加载](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_1.gif)    ![SwipeRefresh](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreLayoutGif_2.gif)    ![GroupItemDecoration](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/GroupItemDecoration_demo1.gif)
 
 ## 使用
 ### 1. 添加依赖
 #### 在project的build.gradle中添加仓库
-
 ```
 allprojects {
     repositories {
@@ -31,26 +30,29 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.1.9'
+    implementation 'com.github.JzyCc:DampRefreshAndLoadMoreLayout:1.2.0'
 }
 ```
 
 ### 2. 在XML布局中加入如下代码
 ```
-    <com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout
+    <com.zmsoft.widget.damprefreshandloadmorelayout.layout.DampRefreshAndLoadMoreLayout
+        android:id="@+id/dll_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:overScrollMode="never">
         </android.support.v7.widget.RecyclerView>
-    </com.jzycc.layout.damplayoutlibrary.layout.DampRefreshAndLoadMoreLayout>
+    </com.zmsoft.widget.damprefreshandloadmorelayout.layout.DampRefreshAndLoadMoreLayout>
 ```
 
 此时配置好RecyclerView后，运行项目可以实现基本的阻尼回弹效果。
 
-![](https://github.com/JzyCc/Material-library/blob/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
+![默认回弹](https://raw.githubusercontent.com/JzyCc/Material-library/master/forgithub/forDampRefreshAndLoadMoreLayout/DampRefreshAndLoadMoreDemo_3.gif)
+
 ### 3.添加下拉刷新和上拉加载功能
 
 **获取DampRefreshAndLoadMoreLayout实例**
@@ -59,9 +61,9 @@ dampRefreshAndLoadMoreLayout = findViewById(R.id.dll_content);
 ```
 - #### 设置下拉刷新功能 
 
-##### 设置默认刷新头部
+##### 设置默认刷新
 ```
-dampRefreshAndLoadMoreLayout.setTopView();
+dampRefreshAndLoadMoreLayout.openRefresh();
 ```
 ##### 添加刷新监听
 
@@ -73,7 +75,7 @@ dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(new DampRefreshAndLoadMore
             }
 
             @Override
-            public void onRefreshing() {
+            public void onRefresh() {
                 //当刷新触发时在此处写刷新相关逻辑
             }
         });
@@ -82,7 +84,7 @@ dampRefreshAndLoadMoreLayout.addOnDampRefreshListener(new DampRefreshAndLoadMore
 ```
 dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                 .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
-                .setTopView()
+                .openRefresh()
                 .addOnDampRefreshListener(new DampRefreshAndLoadMoreLayout.DampRefreshListener() {
                     @Override
                     public void onScrollChanged(int dy, int topViewPosition) {
@@ -90,7 +92,7 @@ dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                     }
 
                     @Override
-                    public void onRefreshing() {
+                    public void onRefresh() {
                         //当刷新触发时在此处写刷新相关逻辑
                     }
                 })
@@ -106,7 +108,7 @@ dampRefreshAndLoadMoreLayout.stopRefreshAnimation();
 ##### 设置默认加载底部
 
 ```
-dampRefreshAndLoadMoreLayout.setBottomView();
+dampRefreshAndLoadMoreLayout.openLoadMore();
 ```
 ##### 添加加载更多监听
 
@@ -118,7 +120,7 @@ dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(new DampRefreshAndLoadMor
             }
 
             @Override
-            public void onLoading() {
+            public void onLoadMore() {
                 //当加载更多触发时在此处写加载相关逻辑
             }
         });
@@ -127,7 +129,7 @@ dampRefreshAndLoadMoreLayout.addOnDampLoadMoreListener(new DampRefreshAndLoadMor
 ```
 dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                 .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
-                .setBottomView()
+                .openLoadMore()
                 .addOnDampLoadMoreListener(new DampRefreshAndLoadMoreLayout.DampLoadMoreListener() {
                     @Override
                     public void onScrollChanged(int dy, int bottomViewPosition) {
@@ -135,7 +137,7 @@ dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                     }
 
                     @Override
-                    public void onLoading() {
+                    public void onLoadMore() {
                         //当加载更多触发时在此处写加载相关逻辑
                     }
                 })
@@ -199,7 +201,7 @@ public class TopViewChild extends FrameLayout implements DampTopViewListener {
 提供了DampTopViewListener接口来返回当前容器的刷新状态，可以通过这些来实现刷新的动画。
 ##### 添加自定义topView
 ```
-dampRefreshAndLoadMoreLayout.setTopView(new TopViewChild(context),topViewHeight);
+dampRefreshAndLoadMoreLayout.openRefresh(new TopViewChild(context),topViewHeight);
 ```
 
 **此处应当传入自定义topView的高度（单位：dp）**
@@ -236,14 +238,14 @@ public class BottomViewChild extends FrameLayout implements DampBottomViewListen
 ```
 ##### 添加自定义bottomView
 ```
-dampRefreshAndLoadMoreLayout.setBottomView(new BottomViewChild(context),bottomViewHeight);
+dampRefreshAndLoadMoreLayout.openLoadMore(new BottomViewChild(context),bottomViewHeight);
 ```
 或者使用Builder模式
 ```
 dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                 .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
-                .setTopView(new TopViewChild(context), topViewHeight)
-                .setBottomView(new BottomViewChild(context),bottomViewHeight)
+                .openRefresh(new TopViewChild(context), topViewHeight)
+                .openLoadMore(new BottomViewChild(context),bottomViewHeight)
                 .build();
 ```
 
@@ -254,7 +256,7 @@ dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
  DampTopViewChild dampTopViewChild = new DampTopViewChild(this);
  dampTopViewChild.setImageColorResource(color);//设置图片颜色
  dampTopViewChild.setTextColorResource(color);//设置文本颜色
- dampRefreshAndLoadMoreLayout.setTopView(dampTopViewChild,DampTopViewChild.DAMPTOPVIEW_HEIGHT);//设置TopView
+ dampRefreshAndLoadMoreLayout.openRefresh(dampTopViewChild,DampTopViewChild.DAMPTOPVIEW_HEIGHT);//设置TopView
 ```
 ##### 默认bottomView设置图片和文本颜色以及文本内容
 
@@ -263,7 +265,7 @@ dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
  dampBottomViewChild.setImageColorResource(color);//设置图片颜色 
  dampBottomViewChild.setTextColorResource(color);//设置文本颜色
  dampBottomViewChild.setLoadOverText(text);//设置加载完毕文本内容
- dampRefreshAndLoadMoreLayout.setBottomView(dampBottomViewChild,DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
+ dampRefreshAndLoadMoreLayout.openLoadMore(dampBottomViewChild,DampBottomViewChild.DAMPBOTTOMVIEW_HEIGHT);
 ```
 **此处应当传入自定义bottomView的高度（单位：dp）**
 
@@ -272,11 +274,11 @@ dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
 ```
 dampRefreshAndLoadMoreLayout = new DampRefreshAndLoadMoreLayout.Builder()
                 .attachLayout(dampRefreshAndLoadMoreLayout)//传入DampRefreshAndLoadMoreLayout实例
-                .setTopView(new DampTopViewChild.Builder(this)
+                .openRefresh(new DampTopViewChild.Builder(this)
                         .setImageColorResource(color)//设置图片颜色
                         .setTextColorResource(color)//设置文本颜色
                         .build(), DampTopViewChild.DAMPTOPVIEW_HEIGHT)
-                .setBottomView(new DampBottomViewChild.Builder(this)
+                .openLoadMore(new DampBottomViewChild.Builder(this)
                         .setImageColorResource(color)//设置图片颜色 
                         .setTextColorResource(color)//设置文本颜色
                         .setLoadOverText(text)//设置加载完毕文本内容
