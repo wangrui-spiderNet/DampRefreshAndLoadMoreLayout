@@ -47,6 +47,8 @@ import java.util.List;
  * 5. 容器触发加载和刷新时，无论是否成功，请及时调用 stopLoadMoreAnimation() 结束加载动画以及调用 stopRefreshAnimation()结束刷新动画。
  * 6. 请确保刷新或者加载成功后，在与Adapter绑定的数据源填充完后再调用 stopLoadMoreAnimation() 和 stopRefreshAnimation() 方法，
  *    及时通知列表刷新是良好习惯，如果不通知列表刷新，可能会有未知的问题发生，通知刷新的操作也应在调用停止动画方法前执行。
+ * 7. 对于分页有2种情况: 1. 在调用 loadOver() 方法时， 如果在此次加载时有数据获得 应先调用 stopLoadMoreAnimation() 方法， 再调用 loadOver() 方法
+ *                     2. 如果在此次加载时没有获取数据， 应直接调用 loadOver() 方法
  */
 public class DampRefreshAndLoadMoreLayout extends LinearLayout implements DampRefreshAndLoadMoreLayoutService{
     private static final String TAG = "DampLayout";

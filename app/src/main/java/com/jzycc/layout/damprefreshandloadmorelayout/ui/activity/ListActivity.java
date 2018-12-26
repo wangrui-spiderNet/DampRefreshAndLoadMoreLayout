@@ -116,6 +116,7 @@ public class ListActivity extends AppCompatActivity {
                                         if (!loadOver) {
                                             dvContent.stopLoadMoreAnimation();
                                         } else {
+                                            dvContent.stopLoadMoreAnimation();
                                             dvContent.loadOver();
                                         }
                                     }
@@ -204,6 +205,7 @@ public class ListActivity extends AppCompatActivity {
                 mAdapter.notifyItemRangeInserted(length, pageSize);
             }
             count++;
+            //loadOver = true;
         } else {
             loadOver = true;
         }
@@ -231,7 +233,7 @@ public class ListActivity extends AppCompatActivity {
                 textView.setText("group " + (groupIndex + 1));
             }
         });
-
+        mGroupItemDecoration.setStickyHeader(false);
         return mGroupItemDecoration;
     }
 }
