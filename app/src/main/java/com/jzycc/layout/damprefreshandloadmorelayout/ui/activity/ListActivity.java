@@ -233,7 +233,7 @@ public class ListActivity extends AppCompatActivity {
                 textView.setText("group " + (groupIndex + 1));
             }
         });
-        mGroupItemDecoration.setStickyHeader(false);
+        mGroupItemDecoration.setStickyHeader(true);
         return mGroupItemDecoration;
     }
 }
