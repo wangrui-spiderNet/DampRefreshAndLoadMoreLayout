@@ -35,7 +35,7 @@ dependencies {
 ```
 
 ### 2. 在XML布局中加入如下代码
-```
+```xml
     <com.zmsoft.widget.damprefreshandloadmorelayout.layout.DampRefreshAndLoadMoreLayout
         android:id="@+id/dll_content"
         android:layout_width="match_parent"
